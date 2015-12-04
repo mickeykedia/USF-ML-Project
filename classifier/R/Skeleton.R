@@ -100,7 +100,11 @@ predictorStandardDeviations <- function(X){
 #' @param X The dataframe with columns corresponding to predictors and rows corresponding to observations 
 #' @return A named list of values representing percentage explained by each component. Names correspond to which component (PC1, PC2 etc)
 predictorPCAVarianceExplained <- function(X){
-  
+  Xp <- prcomp(X, scale = TRUE)
+  X.var <- Xp$sdev^2
+  pve <- X.var / sum(X.var)
+  names(pve) = paste('PC', 1:ncol(X), sep="")
+  return(pve)
 }
 
 #' Point out highly collinear variables 
