@@ -3,6 +3,51 @@
 
 library(corrplot)
 
+# Functions to add to skeleton:
+
+identifyCategoricalContinuousVars <- function(X){
+  s = lapply(X, class)
+  # Returns categorical as TRUE
+  return(s == "factor")
+}
+
+significantPredictors <- function(X, Y){
+  Y = data.matrix(Y)
+  X = data.matrix(X)
+  glm.fit <- glm(Y ~ X, family = binomial)
+  s = summary(glm.fit)
+  p_vals = s$coefficients[-1,4]
+  return(p_vals > 0.05)
+}
+
+# perhaps we should use a tryCatch when calling the function
+tryCatch(significantPredictors(df_numeric[,2:5], df_numeric[,1, drop=FALSE]),
+         finally = print('Review input'))
+
+
+predictorMeans <- function(X){
+  numeric_cols = sapply(X, is.numeric)
+  X_numeric = X[,numeric_cols]
+  var_mean = lapply(X_numeric, mean, na.rm = TRUE)
+  return(unlist(var_sd))
+}
+
+predictorStandardDeviations <- function(X){
+  numeric_cols = sapply(X, is.numeric)
+  X_numeric = X[,numeric_cols]
+  var_sd = lapply(X_numeric, sd, na.rm = TRUE)
+  return(unlist(var_sd))
+}
+
+removeNA <- function(X){
+  return(X[complete.cases(X),])
+}
+
+removeNA(df)
+
+
+
+
 # (0) DATA DESCRIPTION #######################################################
 Y = df[,2]
 X = df[,-2]
