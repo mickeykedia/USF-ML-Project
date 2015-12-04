@@ -2,8 +2,45 @@
 # Final Project: Classification
 
 library(corrplot)
+library(pls, quietly = TRUE)
 
 # Functions to add to skeleton:
+predictorCollinearity <- function(X, threshold = 0.9){
+  p = ncol(X)
+  df_cor <- as.data.frame(as.table(cor(X)))
+  # Remove correlation with self
+  df_cor = subset(df_cor,df_cor$Var1 != df_cor$Var2)
+  # Remove duplicates
+  df_cor = df_cor[!duplicated(df_cor$Freq),]
+  # Sort descending by absolute correlation
+  df_cor = df_cor[ with(df_cor, order( -abs(df_cor[,3]) )),]
+  # Subset those higher than threshold
+  df_cor = subset(df_cor, abs(df_cor$Freq) > threshold)
+  colnames(df_cor)[3] = 'Correlation'
+  rownames(df_cor) <- 1:nrow(df_cor)
+  if (nrow(df_cor) == 0){
+    cat('There are no collinear variables in the dataset')
+  }else{
+    cat('The following variables show signs of collinearity:\n')
+    print.data.frame(df_cor, right = FALSE, digits = 3)
+  }
+}
+
+
+
+predictorPCAVarianceExplained(X)
+predictorPCAVarianceExplained <- function(X){
+  Xp <- prcomp(X, scale = TRUE)
+  X.var <- Xp$sdev^2
+  pve <- X.var / sum(X.var)
+  names(pve) = paste('PC', 1:ncol(X), sep="")
+  return(pve)
+}
+
+
+
+
+
 
 identifyCategoricalContinuousVars <- function(X){
   s = lapply(X, class)
@@ -75,6 +112,7 @@ convertCategoricalToDummy <- function(X){
   X = X[,-to_del]
   return(X)
 }
+
 
 
 
