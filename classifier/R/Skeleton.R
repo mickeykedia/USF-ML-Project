@@ -212,9 +212,66 @@ naive.bayes <- function(Y_train, X_train, Y_test, X_test){
 #' @param X_train The dataframe with columns corresponding to predictors and rows corresponding to observations 
 #' @param X_test The dataframe with columns corresponding to predictors and rows corresponding to observations 
 #' @param Y_train 
-#' @param Y_test 
+#' @param Y_test
+#' @param nfolds Number of folds in the cross validation  
 #' @return fitted model and prediction object
-logistic.regression <- function(Y_train, X_train, Y_test, X_test){
+logistic.regression <- function(Y_train, X_train, Y_test, X_test, nfolds = 4){
+  # Copy the training set
+  X_train2 = data.matrix(X_train)
+  Y_train2 = data.matrix(Y_train)
+  # Fit initial model
+  glm.fit <- glm(Y_train2 ~ X_train2, family = binomial)
+  s = summary(glm.fit)
+  # Re-fit until retaining only statistically significant coefficients
+  repeat{
+    p_vals = s$coefficients[-1,4]
+    min_p = max(p_vals)
+    if (min_p < 0.05){
+      break
+    }
+    if (sum(is.na(p_vals))>0){
+      ind = which(is.na(p_vals) == TRUE)[1]
+    } else {
+      ind = which(p_vals == min_p)  
+    }
+    X_train2 = X_train2[,-ind]
+    glm.fit <- glm(Y_train2 ~ X_train2, family = binomial)
+    s = summary(glm.fit)
+  }
+  # Now run cross validation to find the optimal coefficients with those variables
+  ctrl <- trainControl(method = "repeatedcv", number = nfolds, savePredictions = TRUE)
+  Y_train2  = as.factor(as.character(Y_train2))
+  cv.fit <- train(Y_train2 ~ ., data = X_train2, method="glm", family="binomial",
+                  trControl = ctrl, tuneLength = 5)
+  s = summary(cv.fit)
+  cv.fit$finalModel
+  glm.probs <- predict(cv.fit$finalModel, newdata = as.data.frame(X_train2), type = "response")
+  d1 <- length(glm.probs)
+  
+  # Optimize threshold to classify 0/1 in the training set 
+  lr_accuracy = c()
+  cutoff = seq(0,1,0.01)
+  for (i in cutoff){
+    glm.pred.train <- rep(0, d1)  
+    glm.pred.train[glm.probs > i] = 1
+    accur = mean(glm.pred.train == Y_train)
+    lr_accuracy = c(lr_accuracy, accur)
+  }
+  ind = which(lr_accuracy == max(lr_accuracy))
+  # Predict in training set using the optimal threshold
+  glm.pred.train <- rep(0, d1)  
+  glm.pred.train[glm.probs > cutoff[ind]] = 1
+  accur = mean(glm.pred.train == Y_train)
+  # Predict in test set
+  X_test2 = data.matrix(X_test[,colnames(X_train2)])
+  glm.probs <- predict(cv.fit$finalModel, newdata = as.data.frame(X_test2), type = "response")
+  d2 = length(glm.probs)
+  glm.pred.test <- rep(0, d2)  
+  glm.pred.test[glm.probs > cutoff[ind]] = 1
+  pr <- prediction(glm.pred.test, Y_test)
+  # Return model and prediction objects
+  output = c(pr, cv.fit$finalModel)
+  return(output)
   
 }
 
