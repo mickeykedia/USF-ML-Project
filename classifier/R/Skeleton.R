@@ -109,14 +109,14 @@ convertCategoricalToDummy <- function(X){
 
 #' KNN classification
 #' 
-#' 
+#' Just performs the KNN classification without any preparation for the data. 
 #' 
 #' @param X_train The dataframe with columns corresponding to predictors and rows corresponding to observations 
 #' @param X_test The dataframe with columns corresponding to predictors and rows corresponding to observations 
 #' @param Y_train 
 #' @param Y_test 
 #' @param k optional, if not supplied then Cross validation will be performed to choose k
-#' @return 
+#' @return fitted model and prediction object
 k.nearest.neighbour <- function(Y_train, X_train, Y_test, X_test, k){
   if(missing(k)) {
     # Perform cross validation to find best k 
@@ -124,8 +124,80 @@ k.nearest.neighbour <- function(Y_train, X_train, Y_test, X_test, k){
     
 }
 
+#' Naive Bayes Classifier
+#' 
+#' Just performs the Naive bayes classification without any preparation for the data. 
+#' 
+#' @param X_train The dataframe with columns corresponding to predictors and rows corresponding to observations 
+#' @param X_test The dataframe with columns corresponding to predictors and rows corresponding to observations 
+#' @param Y_train 
+#' @param Y_test 
+#' @return fitted model and prediction object
+naive.bayes <- function(Y_train, X_train, Y_test, X_test){
+  
+}
+#' Logistic Regression Classifier  
+#'  
+#' Runs logistic regression, runs cross-validation to find optimal coefficients and 
+#' finds threshold probability that optimizes classification. Does not preprocessing on the dataset provided
+#' @param X_train The dataframe with columns corresponding to predictors and rows corresponding to observations 
+#' @param X_test The dataframe with columns corresponding to predictors and rows corresponding to observations 
+#' @param Y_train 
+#' @param Y_test 
+#' @return fitted model and prediction object
+logistic.regression <- function(Y_train, X_train, Y_test, X_test){
+  
+}
+
+#' Linear Discriminant Analysis Classifier 
+#' 
+#' Performs LDA classification for the data. The function expects X_train and X_test to only have continuous variables. 
+#' The function doesn't check any assumptions (for normality or same covariance matrix for the two conditional probabilities)
+#' 
+#' @param X_train The dataframe with columns corresponding to predictors and rows corresponding to observations 
+#' @param X_test The dataframe with columns corresponding to predictors and rows corresponding to observations 
+#' @param Y_train 
+#' @param Y_test 
+#' @return fitted model and prediction object
+linear.discriminant.analysis <- function(Y_train, X_train, Y_test, X_test){
+  
+}
+
+#' Quadratic Discriminant Analysis Classifier 
+#' 
+#' Performs QDA classification for the data. The function expects X_train and X_test to only have continuous variables. 
+#' The function doesn't check any assumptions (for normality)
+#' 
+#' @param X_train The dataframe with columns corresponding to predictors and rows corresponding to observations 
+#' @param X_test The dataframe with columns corresponding to predictors and rows corresponding to observations 
+#' @param Y_train 
+#' @param Y_test 
+#' @return fitted model and prediction object
+quadratic.discriminant.analysis <- function(Y_train, X_train, Y_test, X_test){
+  
+}
+#' Random Forest Classifier
+#' 
+#' Performs a Random forest classification for the data. How to choose the params depends on 
+#' what options the function we are using provides us. We could ask the user to specify this or 
+#' choose m as sqrt(p) and B as some reasonably large number related to the number of observations we have
+#' 
+#' @param X_train The dataframe with columns corresponding to predictors and rows corresponding to observations 
+#' @param X_test The dataframe with columns corresponding to predictors and rows corresponding to observations 
+#' @param Y_train 
+#' @param Y_test 
+#' @param B the number of trees to fit 
+#' @param m the number of parameters that each tree will have 
+#' @return fitted model and prediction object
+random.forest <- function(Y_train, X_train, Y_test, X_test, B, m){
+  
+}
+
 
 ########## OUTPUT RELATED ###############
 # Summary of prediction objects
 # Provide list of model assumptions for each model specified
 # Plot Accuracy/ROC/AUC/MSE/MSPE Curves
+
+
+
