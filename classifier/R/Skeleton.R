@@ -1,14 +1,21 @@
+library(ade4, quietly = TRUE)
+library(caret, quietly = TRUE)
+library(ROCR, quietly = TRUE)
+library(class, quietly = TRUE)
+
+
 
 
 ########## PARAM EVALUATION ##############
 # Split vars as categorical and continuous
 # Find Number of NA's 
-sum(is.na(df))
+# sum(is.na(df))
 # List of significant vars according to logistic regression
 # Plot means of each variable
 # Plot Standard devs of each variable
 # Plot PCA Scree plot for all variables
 # List of highly collinear variables 
+# Split data into train and test set 
 
 
 
@@ -18,6 +25,9 @@ sum(is.na(df))
 #' @param X The dataframe with columns corresponding to predictors and rows corresponding to observations
 #' @return A named list of flags for categorical and continuous with names corresponding to variable names or column numbers
 identifyCategoricalContinuousVars <- function(X){
+  s = lapply(X, class)
+  # Returns categorical as TRUE
+  return(s == "factor")
 }
 
 #' Identify significant predictors from all given predictors
@@ -28,7 +38,29 @@ identifyCategoricalContinuousVars <- function(X){
 #' @param Y The dataframe with the given classification for every observation
 #' @return A named list of booleans with the TRUE corresponding to significant predictors and FALSE corresponding to insignificant predictors
 significantPredictors <- function(X, Y){
-  
+  # Fit initial regression
+  X2 = data.matrix(X)
+  glm.fit <- glm(Y ~ X2, family = binomial)
+  s = summary(glm.fit)
+  # Remove statistically insignificant one at a time
+  repeat{
+    p_vals = s$coefficients[-1,4]
+    min_p = max(p_vals)
+    if (min_p < 0.05){
+      break
+    }
+    if (sum(is.na(p_vals))>0){
+      ind = which(is.na(p_vals) == TRUE)[1]
+    } else {
+      ind = which(p_vals == min_p)  
+    }
+    X2 = X2[,-ind]
+    glm.fit <- glm(Y ~ X2, family = binomial)
+    s = summary(glm.fit)
+  }
+  output = colnames(X) %in% colnames(X2)
+  names(output) = colnames(X)
+  return(output)
 }
 
 
@@ -39,6 +71,10 @@ significantPredictors <- function(X, Y){
 #' @param X The dataframe with columns corresponding to predictors and rows corresponding to observations 
 #' @return A named list of means of each continuous predictor in the dataframe
 predictorMeans <- function(X){
+  numeric_cols = sapply(X, is.numeric)
+  X_numeric = X[,numeric_cols]
+  var_mean = lapply(X_numeric, mean, na.rm = TRUE)
+  return(unlist(var_sd))
   
 }
 
@@ -50,6 +86,10 @@ predictorMeans <- function(X){
 #' @param X The dataframe with columns corresponding to predictors and rows corresponding to observations 
 #' @return A named list of standard deviations of each continuous predictor in the dataframe
 predictorStandardDeviations <- function(X){
+  numeric_cols = sapply(X, is.numeric)
+  X_numeric = X[,numeric_cols]
+  var_sd = lapply(X_numeric, sd, na.rm = TRUE)
+  return(unlist(var_sd))
   
 }
 
@@ -84,7 +124,7 @@ predictorCollinearity <- function(){
 #' @param X The dataframe with columns corresponding to predictors and rows corresponding to observations 
 #' @return A dataframe derived from X which does not contain observations (rows) which have NA's in any column for that row 
 removeNA <- function(X){
-  
+  return(X[complete.cases(X),])
 }
 
 #' Convert categorical variables to dummy variables
@@ -94,6 +134,17 @@ removeNA <- function(X){
 #' @param X The dataframe with columns corresponding to predictors and rows corresponding to observations 
 #' @return A dataframe derived from X which does not contain observations (rows) which have NA's in any column for that row 
 convertCategoricalToDummy <- function(X){
+  to_del = c()
+  p <- ncol(X)
+  for (i in 1:p){
+    if (is.factor(X[,i])){
+      X_temp = acm.disjonctif(X[,i, drop=FALSE])
+      df = cbind(X, X_temp)
+      to_del[length(to_del)+1] = i
+      }
+    }
+  X = X[,-to_del]
+  return(X)
 
 }
 
@@ -119,10 +170,21 @@ convertCategoricalToDummy <- function(X){
 #' @return fitted model and prediction object
 k.nearest.neighbour <- function(Y_train, X_train, Y_test, X_test, k){
   if(missing(k)) {
+    ctrl <- trainControl(method = "repeatedcv", number = 4, savePredictions = TRUE)
+    Y_train2  = as.factor(as.character(data.matrix(Y_train)))
+    cv.fit <- train(Y_train2 ~ ., data = data.matrix(X_train), method="knn",
+                    trControl = ctrl, tuneLength = 10)
+    k = cv.fit$bestTune[[1]]
     # Perform cross validation to find best k 
   } 
-    
+  knn.pred = predict(cv.fit$finalModel, newdata = as.data.frame(X_test), type = "class")
+  pr <- prediction(as.numeric(as.character(knn.pred)), Y_test)
+  
+  output = c(pr, cv.fit$finalModel)
+  # Return model and prediction objects
+  return(output)
 }
+    
 
 #' Naive Bayes Classifier
 #' 
@@ -199,5 +261,22 @@ random.forest <- function(Y_train, X_train, Y_test, X_test, B, m){
 # Provide list of model assumptions for each model specified
 # Plot Accuracy/ROC/AUC/MSE/MSPE Curves
 
+classifier.metrics <- function(pred.obj, print.flag = FALSE){
+  "Return classifier statistics in the test set
+  Input: Prediction object (ROCR)
+  Output: A list with MSPE, accuracy, sensitivity and specificity"
+  mspe = mspe = mean((slot(pred.obj[[1]], 'predictions')[[1]] - 
+          as.numeric(as.character(slot(pred.obj[[1]], 'labels')[[1]])))^2)
+  accuracy = slot(performance(pred.obj[[1]], "acc"), "y.values")[[1]][2]
+  sensitivity = slot(performance(pred.obj[[1]], "sens"), "y.values")[[1]][2]
+  specificity = slot(performance(pred.obj[[1]], "spec"), "y.values")[[1]][2]
+  
+  if (print.flag){
+    cat('\n- Classifier metrics:\n   MSPE: ', mspe, '\n   Accuracy: ', 
+    accuracy, '\n   Sensitivity: ', sensitivity, '\n   Specificity: ', 
+    specificity)
+  }
+  return(c(mspe, accuracy, sensitivity, specificity))
+}
 
 
