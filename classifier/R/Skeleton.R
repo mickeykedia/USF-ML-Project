@@ -167,23 +167,30 @@ convertCategoricalToDummy <- function(X){
 #' @param Y_train 
 #' @param Y_test 
 #' @param k optional, if not supplied then Cross validation will be performed to choose k
+#' @param nfolds Number of folds in the cross validation
 #' @return fitted model and prediction object
-k.nearest.neighbour <- function(Y_train, X_train, Y_test, X_test, k){
+k.nearest.neighbour <- function(Y_train, X_train, Y_test, X_test, k, nfolds = 4){
+  # Perform cross validation
+  ctrl <- trainControl(method = "repeatedcv", number = nfolds, savePredictions = TRUE)
+  Y_train2  = as.factor(as.character(data.matrix(Y_train)))
+  # If k is not specified, then tune with 10 "k"s
   if(missing(k)) {
-    ctrl <- trainControl(method = "repeatedcv", number = 4, savePredictions = TRUE)
-    Y_train2  = as.factor(as.character(data.matrix(Y_train)))
     cv.fit <- train(Y_train2 ~ ., data = data.matrix(X_train), method="knn",
                     trControl = ctrl, tuneLength = 10)
     k = cv.fit$bestTune[[1]]
-    # Perform cross validation to find best k 
-  } 
+  }else{
+    # Otherwise fit (or tune) with the specified value(s) of k
+    cv.fit <- train(Y_train2 ~ ., data = data.matrix(X_train), method="knn",
+                    trControl = ctrl, tuneGrid = data.frame(k))
+  }
   knn.pred = predict(cv.fit$finalModel, newdata = as.data.frame(X_test), type = "class")
   pr <- prediction(as.numeric(as.character(knn.pred)), Y_test)
   
-  output = c(pr, cv.fit$finalModel)
   # Return model and prediction objects
+  output = c(pr, cv.fit$finalModel)
   return(output)
 }
+
     
 
 #' Naive Bayes Classifier
