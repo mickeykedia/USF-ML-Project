@@ -12,13 +12,32 @@ identifyCategoricalContinuousVars <- function(X){
 }
 
 significantPredictors <- function(X, Y){
-  Y = data.matrix(Y)
-  X = data.matrix(X)
-  glm.fit <- glm(Y ~ X, family = binomial)
+  # Fit initial regression
+  X2 = data.matrix(X)
+  glm.fit <- glm(Y ~ X2, family = binomial)
   s = summary(glm.fit)
-  p_vals = s$coefficients[-1,4]
-  return(p_vals > 0.05)
+  # Remove statistically insignificant one at a time
+  repeat{
+    p_vals = s$coefficients[-1,4]
+    min_p = max(p_vals)
+    if (min_p < 0.05){
+      break
+    }
+    if (sum(is.na(p_vals))>0){
+      ind = which(is.na(p_vals) == TRUE)[1]
+    } else {
+      ind = which(p_vals == min_p)  
+    }
+    X2 = X2[,-ind]
+    glm.fit <- glm(Y ~ X2, family = binomial)
+    s = summary(glm.fit)
+  }
+  output = colnames(X) %in% colnames(X2)
+  names(output) = colnames(X)
+  return(output)
 }
+
+
 
 # perhaps we should use a tryCatch when calling the function
 tryCatch(significantPredictors(df_numeric[,2:5], df_numeric[,1, drop=FALSE]),
@@ -43,7 +62,21 @@ removeNA <- function(X){
   return(X[complete.cases(X),])
 }
 
-removeNA(df)
+
+convertCategoricalToDummy <- function(X){
+  to_del = c()
+  for (i in 1:p){
+    if (is.factor(X[,i])){
+      X_temp = acm.disjonctif(X[,i, drop=FALSE])
+      df = cbind(X, X_temp)
+      to_del[length(to_del)+1] = i
+      }
+    }
+  X = X[,-to_del]
+  return(X)
+}
+
+
 
 
 
