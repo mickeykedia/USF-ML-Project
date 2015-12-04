@@ -2,15 +2,22 @@
 #Normalization
 # Divide to test and tarin
 
-install.packages("ROCR")
-library(ROCR)
-library(MASS, quietly = TRUE)
-#demo(ROCR)
 
-# put y as 1 st column in the dataframe
-# remaining all are x - predictors
-train <- data.frame(iris$Species[1:100], iris$Sepal.Length[1:100], iris$Sepal.Width[1:100], iris$Petal.Length[1:100], iris$Petal.Width[1:100])
-test <- data.frame(iris$Species[101:150], iris$Sepal.Length[101:150], iris$Sepal.Width[101:150], iris$Petal.Length[101:150], iris$Petal.Width[101:150])
+
+library(MASS)
+library("caret")
+
+
+# 
+# train <- (Year < 2005)
+# Smarket.2005 <- Smarket[!train, ]
+# Direction.2005 <- Direction[!train]
+# Smarket.train <- Smarket[train, ]
+# Smarket.Y <- Direction[train]
+# trDF <- data.frame(Smarket.Y, Smarket.train)
+# tsDF <- data.frame(Direction.2005, Smarket.2005)
+# train <- data.frame(iris$Species[1:100], iris$Sepal.Length[1:100], iris$Sepal.Width[1:100], iris$Petal.Length[1:100], iris$Petal.Width[1:100])
+# test <- data.frame(iris$Species[101:150], iris$Sepal.Length[101:150], iris$Sepal.Width[101:150], iris$Petal.Length[101:150], iris$Petal.Width[101:150])
 
 checkNormality  =function(tarin){
   n <- ncol(train)
@@ -28,6 +35,8 @@ checkNormality  =function(tarin){
   }
   return(str)
 }
+
+
 LDA = function(train, test){
   
   #####Check Normality
@@ -35,11 +44,9 @@ LDA = function(train, test){
   df <- data.frame(train)
   # change the name of response to Y
   names(df)[1]<-c('Y')
-  lda.fit <- lda(df$Y~., data = df, na.omit =TRUE)
-  #look at a summary of the fit
-  # do we want to plot the model here 
-  #lda.fit
-  #plot(lda.fit)
+  coln = colnames(df)
+  lda.fit <- lda(Y~., data = df, na.omit =TRUE)
+ 
   dfTest <- data.frame(test)
   names(dfTest)[1]<-c('Y')
   lda.pred <- predict(lda.fit, dfTest$Y)
@@ -62,6 +69,25 @@ outputLDA <- LDA(train, test)
 
 
 
+
+nbClassifier = function(tr, ts){
+
+  xTrain = tr[,-1]
+  yTrain = tr[,1]
+  
+  xTest = ts[,-1]
+  yTest = ts[,1]
+  
+  model = train(xTrain,yTrain,'nb',trControl=trainControl(method='cv',number=10))
+  
+  k <- predict(model$finalModel,xTest)
+  tb <- table(k$class, yTest)
+  # prop.table(table(predict(model$finalModel,xTest)$class,yTest))
+  return(model, tb)
+}
+
+
+# nbClassifier(trDF, tsDF)
 
 
   
