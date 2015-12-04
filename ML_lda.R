@@ -1,47 +1,39 @@
 
 library(caret)
+
 ####################Linear Discriminant Analysis################
-LDA = function(xTrain, yTrain, xTest, yTest){
-  model = train(xTrain, yTrain,'lda',trControl=trainControl(method='cv',number=10))
+LDA = function(X_train, Y_train, X_test, Y_test){
+  trCtl=trainControl(method='repeatedcv',number=4)
+  model = train(X_train, Y_train,'lda',trControl=trCtl)
+  pred <- predict(model$finalModel, newdata = as.data.frame(X_test))
+  pr <- prediction(as.numeric(pred$class), as.numeric(Y_test))
   
-  k <- predict(model$finalModel, xTest)
-  tb <- table(k$class, yTest)
-  # prop.table(table(predict(model$finalModel,xTest)$class,yTest))
-  return(model, tb)
+  return(model, pr)
 }
 
 
 
 #######NAIVE BAYES#############
-nbClassifier = function(trainX, trainY, testX, testY){
-
-  xTrain = trainX
-  yTrain = trainY
+nbClassifier = function(X_train, Y_train, X_test, Y_test){
+  trCtl=trainControl(method='repeatedcv',number=4)
+  model = train(X_train, Y_train,'nb',trControl=trCtl)
+  pred <- predict(model$finalModel,X_test)
+  pr <- prediction(as.numeric(pred$class), Y_test)
   
-  xTest = testX
-  yTest = testY
-  
-  model = train(xTrain,yTrain,'nb',trControl=trainControl(method='cv',number=10))
-  
-  k <- predict(model$finalModel,xTest)
-  tb <- table(k$class, yTest)
-  # prop.table(table(predict(model$finalModel,xTest)$class,yTest))
-  return(model, tb)
+  return(model, pr)
 }
 
 
 
-
-############Quadratic discriminant analysis################################
-QDA = function(xTrain, yTrain, xTest, yTest){
-  model = train(xTrain, yTrain,'qda',trControl=trainControl(method='cv',number=10))
-  k <- predict(model$finalModel, xTest)
-  tb <- table(k$class, yTest)
-  # prop.table(table(predict(model$finalModel,xTest)$class,yTest))
-  return(model, tb)
+############Quadratic discriminant Analysis################################
+QDA = function(X_train, Y_train, X_test, Y_test){
+  trCtl=trainControl(method='repeatedcv',number=4)
+  model = train(X_train, Y_train,'qda',trControl=trCtl)
+  pred <- predict(model$finalModel, newdata = as.data.frame(X_test))
+  pr <- prediction(as.numeric(pred$class), as.numeric(Y_test))
   
+  return(model, pr)
 }
 
-  
 
 
