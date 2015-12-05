@@ -208,12 +208,13 @@ k.nearest.neighbour <- function(Y_train, X_train, Y_test, X_test, k, nfolds = 4)
 #' @param Y_train 
 #' @param Y_test 
 #' @return fitted model and prediction object
-naive.bayes <- function(Y_train, X_train, Y_test, X_test){
-  trCtl=trainControl(method='repeatedcv',number=4)
+naive.bayes <- function(Y_train, X_train, Y_test, X_test, nfolds = 4){
+  trCtl=trainControl(method='repeatedcv',number=nfolds)
   model = train(X_train, Y_train,'nb',trControl=trCtl)
   pred <- predict(model$finalModel,X_test)
   pr <- prediction(as.numeric(pred$class), Y_test)
-  return(pr,model)
+  output <- c(pr, model)
+  return(output)
 }
 #' Logistic Regression Classifier  
 #'  
@@ -295,13 +296,13 @@ logistic.regression <- function(Y_train, X_train, Y_test, X_test, nfolds = 4){
 #' @param Y_train 
 #' @param Y_test 
 #' @return fitted model and prediction object
-linear.discriminant.analysis <- function(Y_train, X_train, Y_test, X_test){
-  trCtl=trainControl(method='repeatedcv',number=4)
+linear.discriminant.analysis <- function(Y_train, X_train, Y_test, X_test, nfolds = 4){
+  trCtl=trainControl(method='repeatedcv',number=nfolds)
   model = train(X_train, Y_train,'lda',trControl=trCtl)
   pred <- predict(model$finalModel, newdata = as.data.frame(X_test))
   pr <- prediction(as.numeric(pred$class), as.numeric(Y_test))
-  
-  return(model, pr)
+  output <- c(pr, model)
+  return(output)
   
 }
 
@@ -315,12 +316,13 @@ linear.discriminant.analysis <- function(Y_train, X_train, Y_test, X_test){
 #' @param Y_train 
 #' @param Y_test 
 #' @return fitted model and prediction object
-quadratic.discriminant.analysis <- function(Y_train, X_train, Y_test, X_test){
-  trCtl=trainControl(method='repeatedcv',number=4)
+quadratic.discriminant.analysis <- function(Y_train, X_train, Y_test, X_test, nfolds){
+  trCtl=trainControl(method='repeatedcv',number=nfolds)
   model = train(X_train, Y_train,'qda',trControl=trCtl)
   pred <- predict(model$finalModel, newdata = as.data.frame(X_test))
   pr <- prediction(as.numeric(pred$class), as.numeric(Y_test))
-  return(pr, model)
+  output <- c(pr, model)
+  return(output)
 }
 
 #'
