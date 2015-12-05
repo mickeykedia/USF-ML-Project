@@ -16,6 +16,8 @@ library(class, quietly = TRUE)
 # Plot PCA Scree plot for all variables
 # List of highly collinear variables 
 # Split data into train and test set 
+# List of significant vars according to Random Forest or Decision Tree
+
 
 
 
@@ -143,7 +145,7 @@ convertCategoricalToDummy <- function(X){
   for (i in 1:p){
     if (is.factor(X[,i])){
       X_temp = acm.disjonctif(X[,i, drop=FALSE])
-      df = cbind(X, X_temp)
+      X = cbind(X, X_temp[-1])
       to_del[length(to_del)+1] = i
       }
     }
@@ -207,7 +209,11 @@ k.nearest.neighbour <- function(Y_train, X_train, Y_test, X_test, k, nfolds = 4)
 #' @param Y_test 
 #' @return fitted model and prediction object
 naive.bayes <- function(Y_train, X_train, Y_test, X_test){
-  
+  trCtl=trainControl(method='repeatedcv',number=4)
+  model = train(X_train, Y_train,'nb',trControl=trCtl)
+  pred <- predict(model$finalModel,X_test)
+  pr <- prediction(as.numeric(pred$class), Y_test)
+  return(pr,model)
 }
 #' Logistic Regression Classifier  
 #'  
@@ -290,6 +296,12 @@ logistic.regression <- function(Y_train, X_train, Y_test, X_test, nfolds = 4){
 #' @param Y_test 
 #' @return fitted model and prediction object
 linear.discriminant.analysis <- function(Y_train, X_train, Y_test, X_test){
+  trCtl=trainControl(method='repeatedcv',number=4)
+  model = train(X_train, Y_train,'lda',trControl=trCtl)
+  pred <- predict(model$finalModel, newdata = as.data.frame(X_test))
+  pr <- prediction(as.numeric(pred$class), as.numeric(Y_test))
+  
+  return(model, pr)
   
 }
 
@@ -304,7 +316,37 @@ linear.discriminant.analysis <- function(Y_train, X_train, Y_test, X_test){
 #' @param Y_test 
 #' @return fitted model and prediction object
 quadratic.discriminant.analysis <- function(Y_train, X_train, Y_test, X_test){
-  
+  trCtl=trainControl(method='repeatedcv',number=4)
+  model = train(X_train, Y_train,'qda',trControl=trCtl)
+  pred <- predict(model$finalModel, newdata = as.data.frame(X_test))
+  pr <- prediction(as.numeric(pred$class), as.numeric(Y_test))
+  return(pr, model)
+}
+
+#'
+#'
+#'
+#'
+#' @param X_train The dataframe with columns corresponding to predictors and rows corresponding to observations 
+#' @param X_test The dataframe with columns corresponding to predictors and rows corresponding to observations 
+#' @param Y_train 
+#' @param Y_test 
+#' @param max.level 
+#' @param nfolds number of folds for cross validation
+#' @return fitted model and prediction object
+decision.tree <- function(Y_train, X_train, Y_test, X_test, max.level = 5, nfolds = 4){
+  # Perform cross validation
+  ctrl <- trainControl(method = "repeatedcv", number = nfolds, savePredictions = TRUE)
+  Y_train2  = as.factor(as.character(data.matrix(Y_train)))
+  # Fit with max level specified
+  cv.fit <- train(Y_train2 ~ ., data = data.matrix(X_train), method="ctree",
+                    trControl = ctrl, tuneLength = 10, controls = ctree_control(maxdepth = max.level))
+  # Predict with new data
+  tree.pred = predict(cv.fit$finalModel, newdata = as.data.frame(data.matrix(X_test)), type = 'response')
+  pr <- prediction(as.numeric(as.character(tree.pred)), Y_test)
+  # Return model and prediction objects
+  output = c(pr, cv.fit$finalModel)
+  return(output)
 }
 #' Random Forest Classifier
 #' 
@@ -316,10 +358,22 @@ quadratic.discriminant.analysis <- function(Y_train, X_train, Y_test, X_test){
 #' @param X_test The dataframe with columns corresponding to predictors and rows corresponding to observations 
 #' @param Y_train 
 #' @param Y_test 
-#' @param B the number of trees to fit 
-#' @param m the number of parameters that each tree will have 
+#' @param max.pred the number of parameters that each tree will have 
+#' @param max.level 
 #' @return fitted model and prediction object
-random.forest <- function(Y_train, X_train, Y_test, X_test, B, m){
+random.forest <- function(Y_train, X_train, Y_test, X_test, B, max.pred = 4,max.level = 6){
+  # Perform cross validation
+  ctrl <- trainControl(method = "repeatedcv", number = nfolds, savePredictions = TRUE)
+  Y_train2  = as.factor(as.character(data.matrix(Y_train)))
+  # Fit with max
+  cv.fit <- train(Y_train2 ~ ., data = data.matrix(X_train), method="rf",
+                  trControl = ctrl, tuneLength = 10, controls = ctree_control(mtry = max.pred, 
+                maxdepth = max.level))
+  tree.pred = predict(cv.fit$finalModel, newdata = as.data.frame(data.matrix(X_test)), type = 'response')
+  pr <- prediction(as.numeric(as.character(tree.pred)), Y_test)
+  # Return model and prediction objects
+  output = c(pr, cv.fit$finalModel)
+  return(output)
   
 }
 
