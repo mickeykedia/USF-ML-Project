@@ -6,16 +6,32 @@ library(ROCR, quietly = TRUE)
 library(class, quietly = TRUE)
 library(ade4, quietly = TRUE)
 
-# Add to skeleton decision tree
+
+# Add to skeleton random forests
+random.forests <- function(Y_train, X_train, Y_test, X_test, max.pred = 4, max.level = 6, nfolds = 4){
+  # Perform cross validation
+  ctrl <- trainControl(method = "repeatedcv", number = nfolds, savePredictions = TRUE)
+  Y_train2  = as.factor(as.character(data.matrix(Y_train)))
+  # Fit with max
+  cv.fit <- train(Y_train2 ~ ., data = data.matrix(X_train), method="rf",
+                  trControl = ctrl, tuneLength = 10, controls = ctree_control(mtry = max.pred, 
+                maxdepth = max.level))
+  tree.pred = predict(cv.fit$finalModel, newdata = as.data.frame(data.matrix(X_test)), type = 'response')
+  pr <- prediction(as.numeric(as.character(tree.pred)), Y_test)
+  # Return model and prediction objects
+  output = c(pr, cv.fit$finalModel)
+  return(output)
+}
+
 
 decision.tree <- function(Y_train, X_train, Y_test, X_test, max.level = 5, nfolds = 4){
   # Perform cross validation
   ctrl <- trainControl(method = "repeatedcv", number = nfolds, savePredictions = TRUE)
   Y_train2  = as.factor(as.character(data.matrix(Y_train)))
-  # Fit with max
+  # Fit with max level specified
   cv.fit <- train(Y_train2 ~ ., data = data.matrix(X_train), method="ctree",
                     trControl = ctrl, tuneLength = 10, controls = ctree_control(maxdepth = max.level))
-  #tuneLength = 10, 
+  # Predict with new data
   tree.pred = predict(cv.fit$finalModel, newdata = as.data.frame(data.matrix(X_test)), type = 'response')
   pr <- prediction(as.numeric(as.character(tree.pred)), Y_test)
   # Return model and prediction objects
