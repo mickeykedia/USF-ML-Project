@@ -6,6 +6,100 @@ library(ROCR, quietly = TRUE)
 library(class, quietly = TRUE)
 library(ade4, quietly = TRUE)
 
+# I assume Y is the first column of data
+data = cbind(Y, X)
+classification.param.evaluation(data)
+X = df
+
+
+
+classifier.metrics <- function(pred.obj, print.flag = FALSE){
+  "Return classifier statistics in the test set
+  Input: Prediction object (ROCR)
+  Output: A list with MSPE, accuracy, sensitivity, specificity and precision"
+  mspe = mspe = mean((slot(pred.obj[[1]], 'predictions')[[1]] - 
+          as.numeric(as.character(slot(pred.obj[[1]], 'labels')[[1]])))^2)
+  accuracy = slot(performance(pred.obj[[1]], "acc"), "y.values")[[1]][2]
+  sensitivity = slot(performance(pred.obj[[1]], "sens"), "y.values")[[1]][2]
+  specificity = slot(performance(pred.obj[[1]], "spec"), "y.values")[[1]][2]
+  precision = slot(performance(pred.obj[[1]], "prec"), "y.values")[[1]][2]
+  
+  if (print.flag){
+    cat('\n- Classifier metrics:\n   MSPE: ', mspe, '\n   Accuracy: ', 
+    accuracy, '\n   Sensitivity: ', sensitivity, '\n   Specificity: ', 
+    specificity, '\n   Precision: ', precision)
+  }
+  return(c(mspe, accuracy, sensitivity, specificity, precision))
+}
+
+identifyNonNumericVars <- function(X){
+  s = lapply(X, class)
+  # Returns categorical as TRUE
+  output = ((s != "numeric") & (s != "integer"))
+  return(output)
+}
+
+
+classification.param.evaluation <- function(data){
+  
+  cat('\n\n***************** PARAMETER EVALUATION **************************',
+  '*****\n\n', sep = "")
+  
+  # (1) Identify categorical
+  n = nrow(data)
+  p = ncol(data)
+  nonnum = identifyNonNumericVars(data)
+  ncomplete = nrow(removeNA(data))
+  cat('Total number of observations:       ', n, '\n',
+      'Total number of complete cases:     ', ncomplete, '\n',
+      'Total number of variables:          ', p, '\n',
+      ' - Number of non-numeric variables: ', sum(nonnum), '\n',
+      ' - Number of numeric variables:     ', p - sum(nonnum), '\n', sep = "")
+  
+  # (2) Mean and standard deviation of each predictor
+  cat('\nMean of each predictor:\n')
+  print(predictorMeans(data[,2:p]))
+  cat('\nStandard deviation of each predictor:\n')
+  print(predictorStandardDeviations(data[,2:p]))
+  
+  # (3) Which predictors are significant?
+  sig.pred = significantPredictors(data[,2:p],data[,1])
+  names.sig = names(sig.pred[sig.pred == TRUE])
+  cat('\nSignificant predictors in logistic regression:\n')
+  cat(paste(names.sig[1:length(names.sig)-1], ' , '), 
+            names.sig[length(names.sig)])
+  
+  # (4) Collinearity
+  cat('\n\nAnalyzing collinearity:\n')
+  predictorCollinearity(data[,2:p], threshold = 0.8)
+  
+  # (5) Variance explained by each PCA
+  x.pca = predictorPCAVarianceExplained(data[,2:p])
+  cat('\n\nPrincipal Component Analysis (PCA): Variance explained\n')
+  print(x.pca, digits = 3)
+  names(x.pca) = 1:length(x.pca)
+  .pardefault <- par(no.readonly = T)
+  par(mfrow = c(1,2), oma = c(1,1,1,0), mar = c(5,2,4,2))
+  barplot(x.pca, col = 'aliceblue', xlab = 'PC', ylab = '% Variance',
+          main = 'Individual')
+  plot(cumsum(x.pca), type='l', main= 'Cumulative',
+       lwd = 2, col = 'blue', ylab = '% Variance', xlab = 'Number of PCs')
+  abline(v = min(which(cumsum(x.pca) > 0.8)), col = 'skyblue', lwd = 2, lty =2)
+  mtext(expression(bold('PCA: Variance explained')), outer = TRUE, cex = 1.2, line = -1)
+  
+  # Reset plotting parameters
+  cat('\n\n')
+  par(mfrow = c(1,1))
+  par(.pardefault)
+}
+
+
+
+
+
+
+
+
 
 # Add to skeleton random forests
 random.forests <- function(Y_train, X_train, Y_test, X_test, max.pred = 4, max.level = 6, nfolds = 4){
@@ -285,17 +379,18 @@ aggregate.results <- function(res.knn, res.nb, res.log, res.lda, res.qda,
                       'MSPE_test' = double(7), 
                       'Accuracy' = double(7), 
                       'Sensitivity' = double(7), 
-                      'Specificity' = double(7))
+                      'Specificity' = double(7),
+                      'Precision' = double(7))
   df_res[,1] = c('K-Nearest Neighbor', 'Naive Bayes', 'Logistic Regression', 
                  'Linear Discriminant Analysis', 'Quadratic Discriminant Analysis', 
                  'Decision Tree', 'Random Forests')
-  df_res[1,2:5] = classifier.metrics(res.knn)
-  df_res[2,2:5] = classifier.metrics(res.nb)
-  df_res[3,2:5] = classifier.metrics(res.log)
-  df_res[4,2:5] = classifier.metrics(res.lda)
-  df_res[5,2:5] = classifier.metrics(res.qda)
-  df_res[6,2:5] = classifier.metrics(res.tree)
-  df_res[7,2:5] = classifier.metrics(res.rf)
+  df_res[1,2:6] = classifier.metrics(res.knn)
+  df_res[2,2:6] = classifier.metrics(res.nb)
+  df_res[3,2:6] = classifier.metrics(res.log)
+  df_res[4,2:6] = classifier.metrics(res.lda)
+  df_res[5,2:6] = classifier.metrics(res.qda)
+  df_res[6,2:6] = classifier.metrics(res.tree)
+  df_res[7,2:6] = classifier.metrics(res.rf)
   print.data.frame(df_res, digits = 3, right = FALSE)
 }
 
