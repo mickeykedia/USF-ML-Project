@@ -76,7 +76,7 @@ predictorMeans <- function(X){
   numeric_cols = sapply(X, is.numeric)
   X_numeric = X[,numeric_cols]
   var_mean = lapply(X_numeric, mean, na.rm = TRUE)
-  return(unlist(var_sd))
+  return(unlist(var_mean))
   
 }
 
@@ -114,9 +114,28 @@ predictorPCAVarianceExplained <- function(X){
 #' 
 #' @param X The dataframe with columns corresponding to predictors and rows corresponding to observations 
 #' @return 
-predictorCollinearity <- function(){
+predictorCollinearity <- function(X, threshold = 0.9){
+  p = ncol(X)
+  df_cor <- as.data.frame(as.table(cor(X)))
+  # Remove correlation with self
+  df_cor = subset(df_cor,df_cor$Var1 != df_cor$Var2)
+  # Remove duplicates
+  df_cor = df_cor[!duplicated(df_cor$Freq),]
+  # Sort descending by absolute correlation
+  df_cor = df_cor[ with(df_cor, order( -abs(df_cor[,3]) )),]
+  rownames(df_cor) <- 1:nrow(df_cor)
+  # Subset those higher than threshold
+  df_cor = subset(df_cor, abs(df_cor$Freq) > threshold)
+  colnames(df_cor)[3] = 'Correlation'
   
+  if (nrow(df_cor) == 0){
+    cat('There are no collinear variables in the dataset')
+  }else{
+    cat('The following variables show signs of collinearity:\n')
+    print.data.frame(df_cor, right = FALSE, digits = 3)
+  }
 }
+
 
 ########## DATA PREPARATION #############
 # Check for NA's and remove those rows
@@ -208,12 +227,15 @@ k.nearest.neighbour <- function(Y_train, X_train, Y_test, X_test, k, nfolds = 4)
 #' @param Y_train 
 #' @param Y_test 
 #' @return fitted model and prediction object
-naive.bayes <- function(Y_train, X_train, Y_test, X_test){
-  trCtl=trainControl(method='repeatedcv',number=4)
-  model = train(X_train, Y_train,'nb',trControl=trCtl)
-  pred <- predict(model$finalModel,X_test)
+naive.bayes <- function(Y_train, X_train, Y_test, X_test, nfolds = 4){
+  trCtl=trainControl(method='repeatedcv', number=nfolds, savePredictions = TRUE)
+  X_train2 <- data.matrix(X_train)
+  Y_train2 <- as.factor(as.character(data.matrix(Y_train)))
+  model = train(X_train2, Y_train2,'nb',trControl=trCtl)
+  pred <- predict(model$finalModel,newdata = as.data.frame(X_test))
   pr <- prediction(as.numeric(pred$class), Y_test)
-  return(pr,model)
+  output <- c(pr, model)
+  return(output)
 }
 #' Logistic Regression Classifier  
 #'  
@@ -295,13 +317,17 @@ logistic.regression <- function(Y_train, X_train, Y_test, X_test, nfolds = 4){
 #' @param Y_train 
 #' @param Y_test 
 #' @return fitted model and prediction object
-linear.discriminant.analysis <- function(Y_train, X_train, Y_test, X_test){
-  trCtl=trainControl(method='repeatedcv',number=4)
-  model = train(X_train, Y_train,'lda',trControl=trCtl)
-  pred <- predict(model$finalModel, newdata = as.data.frame(X_test))
-  pr <- prediction(as.numeric(pred$class), as.numeric(Y_test))
+linear.discriminant.analysis <- function(Y_train, X_train, Y_test, X_test, nfolds = 4){
+  trCtl = trainControl( method='repeatedcv', number=nfolds, savePredictions = TRUE)
+  X_train2 <- data.matrix(X_train)
+  Y_train2 <- data.matrix(Y_train)
+  Y_train2 <- as.factor(as.character(Y_train2))
   
-  return(model, pr)
+  model = train(X_train2, Y_train2,'lda', trControl=trCtl)
+  pred <- predict(model$finalModel, newdata = as.data.frame(data.matrix(X_test)))
+  pr <- prediction(as.numeric(pred$class), as.numeric(Y_test))
+  output <- c(pr, model)
+  return(output)
   
 }
 
@@ -315,12 +341,14 @@ linear.discriminant.analysis <- function(Y_train, X_train, Y_test, X_test){
 #' @param Y_train 
 #' @param Y_test 
 #' @return fitted model and prediction object
-quadratic.discriminant.analysis <- function(Y_train, X_train, Y_test, X_test){
-  trCtl=trainControl(method='repeatedcv',number=4)
-  model = train(X_train, Y_train,'qda',trControl=trCtl)
+quadratic.discriminant.analysis <- function(Y_train, X_train, Y_test, X_test, nfolds = 4){
+  trCtl=trainControl(method='repeatedcv', number=nfolds, savePredictions = TRUE)
+  Y_train2 <- as.factor(as.character(data.matrix(Y_train)))
+  model = train(data.matrix(X_train), Y_train2,'qda',trControl=trCtl)
   pred <- predict(model$finalModel, newdata = as.data.frame(X_test))
   pr <- prediction(as.numeric(pred$class), as.numeric(Y_test))
-  return(pr, model)
+  output <- c(pr, model)
+  return(output)
 }
 
 #'
@@ -361,7 +389,7 @@ decision.tree <- function(Y_train, X_train, Y_test, X_test, max.level = 5, nfold
 #' @param max.pred the number of parameters that each tree will have 
 #' @param max.level 
 #' @return fitted model and prediction object
-random.forest <- function(Y_train, X_train, Y_test, X_test, B, max.pred = 4,max.level = 6){
+random.forest <- function(Y_train, X_train, Y_test, X_test, B, max.pred = 4,max.level = 6, nfolds = 4){
   # Perform cross validation
   ctrl <- trainControl(method = "repeatedcv", number = nfolds, savePredictions = TRUE)
   Y_train2  = as.factor(as.character(data.matrix(Y_train)))

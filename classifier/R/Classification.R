@@ -64,9 +64,38 @@ classification <- function(data, outcome.col, classifier, predictors, k){
   
  ####################### CLASSIFICATION ZONE ##################### 
   
-  if(classifier=="knn"){
+  if (classifier=="knn"){
     o <- k.nearest.neighbour(Y_train = Y_train, X_train = X_train, Y_test = Y_test, X_test = X_test)
     return(o)
+  } else if (classifier == "nb"){
+    o <- naive.bayes(Y_train = Y_train, X_train = X_train, Y_test = Y_test, X_test = X_test)
+    return(o)
+  } else if (classifier == "lr"){
+    o <- logistic.regression(Y_train = Y_train, X_train = X_train, Y_test = Y_test, X_test = X_test)
+    return(o)
+  } else if (classifier == "lda"){
+    ## Check for only continuous variables
+    categorical.vars <- identifyCategoricalContinuousVars(X_train)
+    o <- linear.discriminant.analysis(Y_train = Y_train, X_train = X_train[!categorical.vars], Y_test = Y_test, X_test = X_test[!categorical.vars])
+    return(o)
+  } else if (classifier == "qda"){
+    ## Check for only continuous variables
+    categorical.vars <- identifyCategoricalContinuousVars(X_train)
+    o <- quadratic.discriminant.analysis(Y_train = Y_train, X_train = X_train[!categorical.vars], Y_test = Y_test, X_test = X_test[!categorical.vars])
+    return(o)
+  } else if (classifier == "dt") {
+    ## Need to send more params
+    ## params should default to checking via cross validation
+    o <- decision.tree(Y_train = Y_train, X_train = X_train, Y_test = Y_test, X_test = X_test)
+    return(o)
+  } else if (classifier == "rf") {
+    ## Need to send more params
+    ## params should default to checking via cross validation
+    o <- random.forest(Y_train = Y_train, X_train = X_train, Y_test = Y_test, X_test = X_test)
+    return(o)
+    
+  } else {
+    #### DO ALL 
   }
 }
 
@@ -76,9 +105,23 @@ classification <- function(data, outcome.col, classifier, predictors, k){
 
 
 
-################ TESTING #######################
+################ TESTING INDIVIDUAL CLASSIFIERS #######################
+
+data <- convertCategoricalToDummy(GermanCredit)
+res.knn <- classification(data, outcome.col = "Class.Good", classifier = "knn")
+res.nb <- classification(data, outcome.col = "Class.Good", classifier = "nb")
+res.lda <- classification(data, outcome.col = "Class.Good", classifier = "lda")
+res.qda <- classification(data, outcome.col = "Class.Good", classifier = "qda")
+res.rf <- classification(data, outcome.col = "Class.Good", classifier = "rf")
+res.dt <- classification(data, outcome.col = "Class.Good", classifier = "dt")
+res.lr <- classification(data, outcome.col = "Class.Good", classifier = "lr")
 
 
+
+
+
+
+################################################################################# 
 titanic <- read.csv("~/Dropbox/ML_project/Datasets/Titanic (for development)/titanic3.csv", header = TRUE)
 # removing name 
 titanic <- titanic[-3]
@@ -140,6 +183,9 @@ plot(per)
 
 
 ###########################
+
+data = GermanCredit
+data <- convertCategoricalToDummy(GermanCredit)
 o <- classification(data = GermanCredit, outcome.col = "Class.Good", classifier = "knn")
 
 roc.1 = performance(o[[1]], measure = 'tpr', x.measure = 'fpr')
