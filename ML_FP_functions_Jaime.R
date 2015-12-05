@@ -6,6 +6,25 @@ library(ROCR, quietly = TRUE)
 library(class, quietly = TRUE)
 library(ade4, quietly = TRUE)
 
+# Add to skeleton decision tree
+
+decision.tree <- function(Y_train, X_train, Y_test, X_test, max.level = 5, nfolds = 4){
+  # Perform cross validation
+  ctrl <- trainControl(method = "repeatedcv", number = nfolds, savePredictions = TRUE)
+  Y_train2  = as.factor(as.character(data.matrix(Y_train)))
+  # Fit with max
+  cv.fit <- train(Y_train2 ~ ., data = data.matrix(X_train), method="ctree",
+                    trControl = ctrl, tuneLength = 10, controls = ctree_control(maxdepth = max.level))
+  #tuneLength = 10, 
+  tree.pred = predict(cv.fit$finalModel, newdata = as.data.frame(data.matrix(X_test)), type = 'response')
+  pr <- prediction(as.numeric(as.character(tree.pred)), Y_test)
+  # Return model and prediction objects
+  output = c(pr, cv.fit$finalModel)
+  return(output)
+}
+
+
+
 # (1) PREPARE DATA FUNCTION ###################################################
 prepare.data <- function(X, Y = NULL, remove.na = FALSE, categtodummy = FALSE, 
                        remove.collinear = FALSE, scale = FALSE,
@@ -17,7 +36,7 @@ prepare.data <- function(X, Y = NULL, remove.na = FALSE, categtodummy = FALSE,
   - Scale variable
   Input: Dataframes X, Y, and TRUE in one method
   Output: Dataframes X, Y"
-  
+  ?train
   if (print.flag) cat('\n##### DATA PREPARTION #####')
   
   if (!is.null(Y)){
