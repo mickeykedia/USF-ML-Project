@@ -75,13 +75,13 @@ classification <- function(data, outcome.col, classifier, predictors, k){
     return(o)
   } else if (classifier == "lda"){
     ## Check for only continuous variables
-    categorical.vars <- identifyCategoricalContinuousVars(X_train)
-    o <- linear.discriminant.analysis(Y_train = Y_train, X_train = X_train[!categorical.vars], Y_test = Y_test, X_test = X_test[!categorical.vars])
+    # categorical.vars <- identifyCategoricalContinuousVars(X_train)
+    o <- linear.discriminant.analysis(Y_train = Y_train, X_train = X_train, Y_test = Y_test, X_test = X_test)
     return(o)
   } else if (classifier == "qda"){
     ## Check for only continuous variables
-    categorical.vars <- identifyCategoricalContinuousVars(X_train)
-    o <- quadratic.discriminant.analysis(Y_train = Y_train, X_train = X_train[!categorical.vars], Y_test = Y_test, X_test = X_test[!categorical.vars])
+    # categorical.vars <- identifyCategoricalContinuousVars(X_train)
+    o <- quadratic.discriminant.analysis(Y_train = Y_train, X_train = X_train, Y_test = Y_test, X_test = X_test)
     return(o)
   } else if (classifier == "dt") {
     ## Need to send more params
@@ -109,13 +109,19 @@ classification <- function(data, outcome.col, classifier, predictors, k){
 
 data <- convertCategoricalToDummy(GermanCredit)
 res.knn <- classification(data, outcome.col = "Class.Good", classifier = "knn")
+# classifier.metrics(res.knn, print.flag = TRUE)
+
 res.nb <- classification(data, outcome.col = "Class.Good", classifier = "nb")
+# classifier.metrics(res.nb, print.flag = T)
 res.lda <- classification(data, outcome.col = "Class.Good", classifier = "lda")
 res.qda <- classification(data, outcome.col = "Class.Good", classifier = "qda")
 res.rf <- classification(data, outcome.col = "Class.Good", classifier = "rf")
+# classifier.metrics(res.rf, print.flag = T)
 res.dt <- classification(data, outcome.col = "Class.Good", classifier = "dt")
-res.lr <- classification(data, outcome.col = "Class.Good", classifier = "lr")
+# classifier.metrics(res.dt, print.flag = T)
 
+res.lr <- classification(data, outcome.col = "Class.Good", classifier = "lr")
+classifier.metrics(res.lr, print.flag = T)
 
 
 
