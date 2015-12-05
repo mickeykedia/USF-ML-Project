@@ -123,10 +123,11 @@ predictorCollinearity <- function(X, threshold = 0.9){
   df_cor = df_cor[!duplicated(df_cor$Freq),]
   # Sort descending by absolute correlation
   df_cor = df_cor[ with(df_cor, order( -abs(df_cor[,3]) )),]
+  rownames(df_cor) <- 1:nrow(df_cor)
   # Subset those higher than threshold
   df_cor = subset(df_cor, abs(df_cor$Freq) > threshold)
   colnames(df_cor)[3] = 'Correlation'
-  rownames(df_cor) <- 1:nrow(df_cor)
+  
   if (nrow(df_cor) == 0){
     cat('There are no collinear variables in the dataset')
   }else{
@@ -228,8 +229,10 @@ k.nearest.neighbour <- function(Y_train, X_train, Y_test, X_test, k, nfolds = 4)
 #' @return fitted model and prediction object
 naive.bayes <- function(Y_train, X_train, Y_test, X_test, nfolds = 4){
   trCtl=trainControl(method='repeatedcv',number=nfolds)
-  model = train(X_train, Y_train,'nb',trControl=trCtl)
-  pred <- predict(model$finalModel,X_test)
+  X_train2 <- data.matrix(X_train)
+  Y_train2 <- as.factor(as.character(data.matrix(Y_train)))
+  model = train(X_train2, Y_train2,'nb',trControl=trCtl)
+  pred <- predict(model$finalModel,newdata = as.data.frame(X_test))
   pr <- prediction(as.numeric(pred$class), Y_test)
   output <- c(pr, model)
   return(output)
@@ -316,7 +319,10 @@ logistic.regression <- function(Y_train, X_train, Y_test, X_test, nfolds = 4){
 #' @return fitted model and prediction object
 linear.discriminant.analysis <- function(Y_train, X_train, Y_test, X_test, nfolds = 4){
   trCtl=trainControl(method='repeatedcv',number=nfolds)
-  model = train(X_train, Y_train,'lda',trControl=trCtl)
+  X_train2 <- data.matrix(X_train)
+  Y_train2 <- data.matrix(Y_train)
+  Y_train2 <- as.factor(as.character(Y_train2))
+  model = train(X_train2, Y_train2,'lda',trControl=trCtl)
   pred <- predict(model$finalModel, newdata = as.data.frame(X_test))
   pr <- prediction(as.numeric(pred$class), as.numeric(Y_test))
   output <- c(pr, model)
@@ -381,7 +387,7 @@ decision.tree <- function(Y_train, X_train, Y_test, X_test, max.level = 5, nfold
 #' @param max.pred the number of parameters that each tree will have 
 #' @param max.level 
 #' @return fitted model and prediction object
-random.forest <- function(Y_train, X_train, Y_test, X_test, B, max.pred = 4,max.level = 6){
+random.forest <- function(Y_train, X_train, Y_test, X_test, B, max.pred = 4,max.level = 6, nfolds = 4){
   # Perform cross validation
   ctrl <- trainControl(method = "repeatedcv", number = nfolds, savePredictions = TRUE)
   Y_train2  = as.factor(as.character(data.matrix(Y_train)))
