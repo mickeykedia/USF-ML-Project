@@ -67,28 +67,28 @@ classification <- function(data, outcome.col, classifier, predictors, k){
   if (classifier=="knn"){
     o <- k.nearest.neighbour(Y_train = Y_train, X_train = X_train, Y_test = Y_test, X_test = X_test)
     return(o)
-  } else if (classifier = "nb"){
+  } else if (classifier == "nb"){
     o <- naive.bayes(Y_train = Y_train, X_train = X_train, Y_test = Y_test, X_test = X_test)
     return(o)
-  } else if (classifier = "lr"){
+  } else if (classifier == "lr"){
     o <- logistic.regression(Y_train = Y_train, X_train = X_train, Y_test = Y_test, X_test = X_test)
     return(o)
-  } else if (classifier = "lda"){
+  } else if (classifier == "lda"){
     ## Check for only continuous variables
     categorical.vars <- identifyCategoricalContinuousVars(X_train)
     o <- linear.discriminant.analysis(Y_train = Y_train, X_train = X_train[!categorical.vars], Y_test = Y_test, X_test = X_test[!categorical.vars])
     return(o)
-  } else if (classifier = "qda"){
+  } else if (classifier == "qda"){
     ## Check for only continuous variables
     categorical.vars <- identifyCategoricalContinuousVars(X_train)
     o <- quadratic.discriminant.analysis(Y_train = Y_train, X_train = X_train[!categorical.vars], Y_test = Y_test, X_test = X_test[!categorical.vars])
     return(o)
-  } else if (classifier = "dt") {
+  } else if (classifier == "dt") {
     ## Need to send more params
     ## params should default to checking via cross validation
     o <- decision.tree(Y_train = Y_train, X_train = X_train, Y_test = Y_test, X_test = X_test)
     return(o)
-  } else if (classifier = "rf") {
+  } else if (classifier == "rf") {
     ## Need to send more params
     ## params should default to checking via cross validation
     o <- random.forest(Y_train = Y_train, X_train = X_train, Y_test = Y_test, X_test = X_test)
