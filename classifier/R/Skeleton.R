@@ -19,6 +19,61 @@ library(class, quietly = TRUE)
 # List of significant vars according to Random Forest or Decision Tree
 
 
+classification.param.evaluation <- function(data){
+  
+  cat('\n\n***************** PARAMETER EVALUATION **************************',
+      '*****\n\n', sep = "")
+  
+  # (1) Identify categorical
+  n = nrow(data)
+  p = ncol(data)
+  nonnum = identifyNonNumericVars(data)
+  ncomplete = nrow(removeNA(data))
+  cat('Total number of observations:       ', n, '\n',
+      'Total number of complete cases:     ', ncomplete, '\n',
+      'Total number of variables:          ', p, '\n',
+      ' - Number of non-numeric variables: ', sum(nonnum), '\n',
+      ' - Number of numeric variables:     ', p - sum(nonnum), '\n', sep = "")
+  
+  # (2) Mean and standard deviation of each predictor
+  cat('\nMean of each predictor:\n')
+  print(predictorMeans(data[,2:p]))
+  cat('\nStandard deviation of each predictor:\n')
+  print(predictorStandardDeviations(data[,2:p]))
+  
+  # (3) Which predictors are significant?
+  sig.pred = significantPredictors(data[,2:p],data[,1])
+  names.sig = names(sig.pred[sig.pred == TRUE])
+  cat('\nSignificant predictors in logistic regression:\n')
+  cat(paste(names.sig[1:length(names.sig)-1], ' , '), 
+      names.sig[length(names.sig)])
+  
+  # (4) Collinearity
+  cat('\n\nAnalyzing collinearity:\n')
+  predictorCollinearity(data[,2:p], threshold = 0.8)
+  
+  # (5) Variance explained by each PCA
+  x.pca = predictorPCAVarianceExplained(data[,2:p])
+  cat('\n\nPrincipal Component Analysis (PCA): Variance explained\n')
+  print(x.pca, digits = 3)
+  names(x.pca) = 1:length(x.pca)
+  .pardefault <- par(no.readonly = T)
+  par(mfrow = c(1,2), oma = c(1,1,1,0), mar = c(5,2,4,2))
+  barplot(x.pca, col = 'aliceblue', xlab = 'PC', ylab = '% Variance',
+          main = 'Individual')
+  plot(cumsum(x.pca), type='l', main= 'Cumulative',
+       lwd = 2, col = 'blue', ylab = '% Variance', xlab = 'Number of PCs')
+  abline(v = min(which(cumsum(x.pca) > 0.8)), col = 'skyblue', lwd = 2, lty =2)
+  mtext(expression(bold('PCA: Variance explained')), outer = TRUE, cex = 1.2, line = -1)
+  
+  # Reset plotting parameters
+  cat('\n\n')
+  par(mfrow = c(1,1))
+  par(.pardefault)
+}
+
+
+
 
 
 
@@ -26,10 +81,11 @@ library(class, quietly = TRUE)
 #' 
 #' @param X The dataframe with columns corresponding to predictors and rows corresponding to observations
 #' @return A named list of flags for categorical and continuous with names corresponding to variable names or column numbers
-identifyCategoricalContinuousVars <- function(X){
+identifyNonNumericVars <- function(X){
   s = lapply(X, class)
   # Returns categorical as TRUE
-  return(s == "factor")
+  output = ((s != "numeric") & (s != "integer"))
+  return(output)
 }
 
 #' Identify significant predictors from all given predictors
@@ -414,19 +470,20 @@ random.forest <- function(Y_train, X_train, Y_test, X_test, B, max.pred = 4,max.
 classifier.metrics <- function(pred.obj, print.flag = FALSE){
   "Return classifier statistics in the test set
   Input: Prediction object (ROCR)
-  Output: A list with MSPE, accuracy, sensitivity and specificity"
+  Output: A list with MSPE, accuracy, sensitivity, specificity and precision"
   mspe = mspe = mean((slot(pred.obj[[1]], 'predictions')[[1]] - 
-          as.numeric(as.character(slot(pred.obj[[1]], 'labels')[[1]])))^2)
+                        as.numeric(as.character(slot(pred.obj[[1]], 'labels')[[1]])))^2)
   accuracy = slot(performance(pred.obj[[1]], "acc"), "y.values")[[1]][2]
   sensitivity = slot(performance(pred.obj[[1]], "sens"), "y.values")[[1]][2]
   specificity = slot(performance(pred.obj[[1]], "spec"), "y.values")[[1]][2]
+  precision = slot(performance(pred.obj[[1]], "prec"), "y.values")[[1]][2]
   
   if (print.flag){
     cat('\n- Classifier metrics:\n   MSPE: ', mspe, '\n   Accuracy: ', 
-    accuracy, '\n   Sensitivity: ', sensitivity, '\n   Specificity: ', 
-    specificity)
+        accuracy, '\n   Sensitivity: ', sensitivity, '\n   Specificity: ', 
+        specificity, '\n   Precision: ', precision)
   }
-  return(c(mspe, accuracy, sensitivity, specificity))
+  return(c(mspe, accuracy, sensitivity, specificity, precision))
 }
 
 
