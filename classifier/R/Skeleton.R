@@ -228,7 +228,7 @@ k.nearest.neighbour <- function(Y_train, X_train, Y_test, X_test, k, nfolds = 4)
 #' @param Y_test 
 #' @return fitted model and prediction object
 naive.bayes <- function(Y_train, X_train, Y_test, X_test, nfolds = 4){
-  trCtl=trainControl(method='repeatedcv',number=nfolds)
+  trCtl=trainControl(method='repeatedcv', number=nfolds, savePredictions = TRUE)
   X_train2 <- data.matrix(X_train)
   Y_train2 <- as.factor(as.character(data.matrix(Y_train)))
   model = train(X_train2, Y_train2,'nb',trControl=trCtl)
@@ -318,12 +318,13 @@ logistic.regression <- function(Y_train, X_train, Y_test, X_test, nfolds = 4){
 #' @param Y_test 
 #' @return fitted model and prediction object
 linear.discriminant.analysis <- function(Y_train, X_train, Y_test, X_test, nfolds = 4){
-  trCtl=trainControl(method='repeatedcv',number=nfolds)
+  trCtl = trainControl( method='repeatedcv', number=nfolds, savePredictions = TRUE)
   X_train2 <- data.matrix(X_train)
   Y_train2 <- data.matrix(Y_train)
   Y_train2 <- as.factor(as.character(Y_train2))
-  model = train(X_train2, Y_train2,'lda',trControl=trCtl)
-  pred <- predict(model$finalModel, newdata = as.data.frame(X_test))
+  
+  model = train(X_train2, Y_train2,'lda', trControl=trCtl)
+  pred <- predict(model$finalModel, newdata = as.data.frame(data.matrix(X_test)))
   pr <- prediction(as.numeric(pred$class), as.numeric(Y_test))
   output <- c(pr, model)
   return(output)
@@ -340,9 +341,10 @@ linear.discriminant.analysis <- function(Y_train, X_train, Y_test, X_test, nfold
 #' @param Y_train 
 #' @param Y_test 
 #' @return fitted model and prediction object
-quadratic.discriminant.analysis <- function(Y_train, X_train, Y_test, X_test, nfolds){
-  trCtl=trainControl(method='repeatedcv',number=nfolds)
-  model = train(X_train, Y_train,'qda',trControl=trCtl)
+quadratic.discriminant.analysis <- function(Y_train, X_train, Y_test, X_test, nfolds = 4){
+  trCtl=trainControl(method='repeatedcv', number=nfolds, savePredictions = TRUE)
+  Y_train2 <- as.factor(as.character(data.matrix(Y_train)))
+  model = train(data.matrix(X_train), Y_train2,'qda',trControl=trCtl)
   pred <- predict(model$finalModel, newdata = as.data.frame(X_test))
   pr <- prediction(as.numeric(pred$class), as.numeric(Y_test))
   output <- c(pr, model)
