@@ -76,7 +76,7 @@ predictorMeans <- function(X){
   numeric_cols = sapply(X, is.numeric)
   X_numeric = X[,numeric_cols]
   var_mean = lapply(X_numeric, mean, na.rm = TRUE)
-  return(unlist(var_sd))
+  return(unlist(var_mean))
   
 }
 
@@ -114,9 +114,27 @@ predictorPCAVarianceExplained <- function(X){
 #' 
 #' @param X The dataframe with columns corresponding to predictors and rows corresponding to observations 
 #' @return 
-predictorCollinearity <- function(){
-  
+predictorCollinearity <- function(X, threshold = 0.9){
+  p = ncol(X)
+  df_cor <- as.data.frame(as.table(cor(X)))
+  # Remove correlation with self
+  df_cor = subset(df_cor,df_cor$Var1 != df_cor$Var2)
+  # Remove duplicates
+  df_cor = df_cor[!duplicated(df_cor$Freq),]
+  # Sort descending by absolute correlation
+  df_cor = df_cor[ with(df_cor, order( -abs(df_cor[,3]) )),]
+  # Subset those higher than threshold
+  df_cor = subset(df_cor, abs(df_cor$Freq) > threshold)
+  colnames(df_cor)[3] = 'Correlation'
+  rownames(df_cor) <- 1:nrow(df_cor)
+  if (nrow(df_cor) == 0){
+    cat('There are no collinear variables in the dataset')
+  }else{
+    cat('The following variables show signs of collinearity:\n')
+    print.data.frame(df_cor, right = FALSE, digits = 3)
+  }
 }
+
 
 ########## DATA PREPARATION #############
 # Check for NA's and remove those rows
