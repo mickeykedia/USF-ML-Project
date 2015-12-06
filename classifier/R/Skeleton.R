@@ -18,58 +18,6 @@ library(class, quietly = TRUE)
 # List of significant vars according to Random Forest or Decision Tree
 
 
-classification.param.evaluation <- function(data){
-  
-  cat('\n\n***************** PARAMETER EVALUATION **************************',
-      '*****\n\n', sep = "")
-  
-  # (1) Identify categorical
-  n = nrow(data)
-  p = ncol(data)
-  nonnum = identifyNonNumericVars(data)
-  ncomplete = nrow(removeNA(data))
-  cat('Total number of observations:       ', n, '\n',
-      'Total number of complete cases:     ', ncomplete, '\n',
-      'Total number of variables:          ', p, '\n',
-      ' - Number of non-numeric variables: ', sum(nonnum), '\n',
-      ' - Number of numeric variables:     ', p - sum(nonnum), '\n', sep = "")
-  
-  # (2) Mean and standard deviation of each predictor
-  cat('\nMean of each predictor:\n')
-  print(predictorMeans(data[,2:p]))
-  cat('\nStandard deviation of each predictor:\n')
-  print(predictorStandardDeviations(data[,2:p]))
-  
-  # (3) Which predictors are significant?
-  sig.pred = significantPredictors(data[,2:p],data[,1])
-  names.sig = names(sig.pred[sig.pred == TRUE])
-  cat('\nSignificant predictors in logistic regression:\n')
-  cat(paste(names.sig[1:length(names.sig)-1], ' , '), 
-      names.sig[length(names.sig)])
-  
-  # (4) Collinearity
-  cat('\n\nAnalyzing collinearity:\n')
-  predictorCollinearity(data[,2:p], threshold = 0.8)
-  
-  # (5) Variance explained by each PCA
-  x.pca = predictorPCAVarianceExplained(data[,2:p])
-  cat('\n\nPrincipal Component Analysis (PCA): Variance explained\n')
-  print(x.pca, digits = 3)
-  names(x.pca) = 1:length(x.pca)
-  .pardefault <- par(no.readonly = T)
-  par(mfrow = c(1,2), oma = c(1,1,1,0), mar = c(5,2,4,2))
-  barplot(x.pca, col = 'aliceblue', xlab = 'PC', ylab = '% Variance',
-          main = 'Individual')
-  plot(cumsum(x.pca), type='l', main= 'Cumulative',
-       lwd = 2, col = 'blue', ylab = '% Variance', xlab = 'Number of PCs')
-  abline(v = min(which(cumsum(x.pca) > 0.8)), col = 'skyblue', lwd = 2, lty =2)
-  mtext(expression(bold('PCA: Variance explained')), outer = TRUE, cex = 1.2, line = -1)
-  
-  # Reset plotting parameters
-  cat('\n\n')
-  par(mfrow = c(1,1))
-  par(.pardefault)
-}
 
 
 
@@ -315,12 +263,12 @@ naive.bayes <- function(Y_train, X_train, Y_test, X_test, nfolds = 4){
 #' @param Y_test
 #' @param nfolds Number of folds in the cross validation  
 #' @return fitted model and prediction object
-logistic.regression <- function(Y_train, X_train, Y_test, X_test, nfolds = 4){
+logistic.regression <- function(Y_train, X_train, Y_test, X_test){
   # Copy the training set
   X_train2 = data.matrix(X_train)
   Y_train2 = data.matrix(Y_train)
   # Fit initial model
-  glm.fit <- glm(Y_train2 ~ X_train2, family = binomial)
+  glm.fit <- glm(Y_train2 ~. , data=as.data.frame(X_train2), family = binomial)
   s = summary(glm.fit)
   # Re-fit until retaining only statistically significant coefficients
   repeat{
@@ -335,21 +283,16 @@ logistic.regression <- function(Y_train, X_train, Y_test, X_test, nfolds = 4){
       ind = which(p_vals == min_p)  
     }
     X_train2 = X_train2[,-ind]
-    glm.fit <- glm(Y_train2 ~ X_train2, family = binomial)
+    glm.fit <- glm(Y_train2 ~. , data=as.data.frame(X_train2), family = binomial)
     s = summary(glm.fit)
   }
-  # Now run cross validation to find the optimal coefficients with those variables
-  ctrl <- trainControl(method = "repeatedcv", number = nfolds, savePredictions = TRUE)
-  Y_train2  = as.factor(as.character(Y_train2))
-  cv.fit <- train(Y_train2 ~ ., data = X_train2, method="glm", family="binomial",
-                  trControl = ctrl, tuneLength = 5)
-  s = summary(cv.fit)
-  glm.probs <- predict(cv.fit$finalModel, newdata = as.data.frame(X_train2), type = "response")
+  # Now obtain probabilities
+  glm.probs <- predict(glm.fit, type = "response")
   d1 <- length(glm.probs)
   
-  # Optimize threshold to classify 0/1 in the training set 
+  # Optimize threshold probability to classify 0/1 in the training set 
   lr_accuracy = c()
-  cutoff = seq(0.1,0.9,0.01)
+  cutoff = seq(0, 1, 0.01)
   for (i in cutoff){
     glm.pred.train <- rep(0, d1)  
     glm.pred.train[glm.probs > i] = 1
@@ -359,21 +302,20 @@ logistic.regression <- function(Y_train, X_train, Y_test, X_test, nfolds = 4){
   ind = which(lr_accuracy == max(lr_accuracy))
   # Predict in training set using the optimal threshold
   glm.pred.train <- rep(0, d1)  
-  glm.pred.train[glm.probs > cutoff[ind[1]] = 1
+  glm.pred.train[glm.probs > cutoff[ ind[1] ] ] = 1
   accur = mean(glm.pred.train == Y_train)
   # Predict in test set
-  X_test2 = data.matrix(X_test[,colnames(X_train2)])
-  glm.probs <- predict(cv.fit$finalModel, newdata = as.data.frame(X_test2), type = "response")
+  X_test2 = X_test[,colnames(X_train2)]
+  glm.probs <- predict(glm.fit, newdata = as.data.frame(X_test2), type = "response")
   d2 = length(glm.probs)
   glm.pred.test <- rep(0, d2)  
   glm.pred.test[glm.probs > cutoff[ind[1]]] = 1
-  pr <- prediction(glm.pred.test, Y_test)
+  pr <- prediction(as.numeric(as.character(glm.pred.test)), Y_test)
   # Return model and prediction objects
-  output = c(pr, cv.fit$finalModel)
+  output = c(pr, glm.fit)
   return(output)
   
 }
-
 #' Linear Discriminant Analysis Classifier 
 #' 
 #' Performs LDA classification for the data. The function expects X_train and X_test to only have continuous variables. 
