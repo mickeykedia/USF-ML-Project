@@ -1,7 +1,7 @@
 
 ##### TESTING FUNCTIONALITY #####
 
-# Clean workspace 
+# Clean workspace
 rm(list=ls())
 
 setwd("~/Google Drive/USF/MSAN_621_Intro_to_Machine_Learning/Final project/mlgit/USF-ML-Project/classifier/R")
@@ -16,11 +16,14 @@ data = reposition.Y(data, 'Class.Good')
 classification.param.evaluation(data)
 
 
-# Testing individual classifiers 
+# Testing individual classifiers
 res.knn <- classification(data, outcome.col = "Class.Good", classifier = "knn")
+summary(res.knn)
 res.nb <- classification(data, outcome.col = "Class.Good", classifier = "nb")
+summary(res.nb)
 res.lda <- classification(data, outcome.col = "Class.Good", classifier = "lda")
-res.qda <- classification(data, outcome.col = "Class.Good", classifier = "qda")
+#### DOESN'T WORK ######
+#res.qda <- classification(data, outcome.col = "Class.Good", classifier = "qda")
 res.rf <- classification(data, outcome.col = "Class.Good", classifier = "rf")
 res.dt <- classification(data, outcome.col = "Class.Good", classifier = "dt")
 res.lr <- classification(data, outcome.col = "Class.Good", classifier = "lr")
@@ -35,14 +38,14 @@ plot_roc_curves(res.knn, res.nb, res.lr, res.lda, res.qda, res.dt, res.rf)
 # Ok!
 
 # ALL
-res.all <- classification(data, outcome.col = "credit_risk.bad", classifier = "all")
+res.all <- classification(data, outcome.col = "Class.Good", classifier = "all")
 
 
 
 
 
 
-# PREVIOUS TESTS 
+# PREVIOUS TESTS
 ################ TESTING INDIVIDUAL CLASSIFIERS #######################
 
 data = data("GermanCredit")
@@ -72,9 +75,9 @@ plot_roc_curves(res.knn, res.nb, res.lr, res.lda, res.qda, res.dt, res.rf)
 
 
 
-################################################################################# 
+#################################################################################
 titanic <- read.csv("~/Dropbox/ML_project/Datasets/Titanic (for development)/titanic3.csv", header = TRUE)
-# removing name 
+# removing name
 titanic <- titanic[-3]
 
 # removing home destination
@@ -91,7 +94,7 @@ titanic <- titanic[-9]
 titanic <- titanic[-10]
 
 
-p = 0.8 
+p = 0.8
 
 
 X_train <- data.frame()
@@ -113,7 +116,7 @@ X_test <- X_test[-2]
 #X_train <- convertCategoricalToDummy(X_train)
 #X_test <- convertCategoricalToDummy(X_test)
 
-## Giving me an error ! 
+## Giving me an error !
 
 
 
@@ -121,7 +124,7 @@ o <- k.nearest.neighbour(Y_train, X_train, Y_test, X_test)
 
 res <- classifier.metrics(o[1], print.flag = TRUE)
 
-#### Prediction object - can be used to draw curves etc ##### 
+#### Prediction object - can be used to draw curves etc #####
 per <- performance(o[[1]], measure = "acc")
 plot(per)
 
@@ -156,7 +159,7 @@ names(o)
 classifier.metrics(o,print.flag = TRUE)
 
 
-# Defining Plot and summary relationship ! 
+# Defining Plot and summary relationship !
 class(o) <- c("list", "knn")
 
 plot <- function(o){
