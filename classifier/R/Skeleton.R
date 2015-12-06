@@ -403,7 +403,7 @@ random.forest <- function(Y_train, X_train, Y_test, X_test, B, max.pred = 4,max.
   Y_train2  = as.factor(as.character(data.matrix(Y_train)))
   # Fit with max
   cv.fit <- train(Y_train2 ~ ., data = data.matrix(X_train), method="rf",
-                  trControl = ctrl, tuneLength = 10, controls = ctree_control(mtry = max.pred, 
+                  trControl = ctrl, tuneLength = 2, controls = ctree_control(mtry = max.pred, 
                 maxdepth = max.level))
   rf.pred = predict(cv.fit, newdata = as.data.frame(data.matrix(X_test)), type = 'raw')
   pr <- prediction(as.numeric(as.character(rf.pred)), Y_test)
@@ -442,7 +442,7 @@ barplot.classifier.metric <- function(df_col, name){
   barcol = rep('aliceblue', 7)
   barcol[ind] = 'darkblue'
   labels = c('KNN', 'NB', 'LR', 'LDA', 'QDA', 'TREE', 'RF')
-  barplot(100 * df_col, main = name, col = color.max(df_col), ylab = paste(name, '(%)'),
+  barplot(100 * df_col, main = name, col = barcol, ylab = paste(name, '(%)'),
           names.arg = labels, ylim = c(0,100))
   text(ind - 0.5 + 0.2 * ind, max(100 * df_col) + 6 , paste(round(max(100 * df_col),1),'%',sep=''))
   box()
@@ -480,7 +480,9 @@ aggregate.results <- function(res.knn, res.nb, res.log, res.lda, res.qda,
   ind = which(ranking$avg == max(ranking$avg))
   df_res[ind,7] = 'BEST'
   options(digits = 3)
+  cat('\n')
   print.data.frame(df_res, digits = 3, right = FALSE)
+  cat('\n')
   
   # Plot
   par(mfrow = c(2,2))
@@ -503,16 +505,17 @@ plot_roc_curves <- function(res.knn, res.nb, res.log, res.lda, res.qda,
   
   # Plot all together
   par(mfrow = c(1,1))
-  plot(roc.1, col = 'beige', lwd = 3, main = 'ROC curve per classifier')
-  plot(roc.2, add=TRUE, col = 'blue', lwd = 2)
-  plot(roc.3, add=TRUE, col = 'red', lwd = 2)
-  plot(roc.4, add=TRUE, col = 'darkgreen', lwd = 2)
-  plot(roc.5, add=TRUE, col = 'magenta', lwd = 2)
-  plot(roc.6, add=TRUE, col = 'yellow', lwd = 2)
-  plot(roc.7, add=TRUE, col = 'aliceblue', lwd = 2)
+  colors = c('blue', 'red', 'darkgreen', 'deeppink3', 'goldenrod2', 'darkolivegreen3')
+  plot(roc.1, col = colors[1], lwd = 3, main = 'ROC curve per classifier',
+       xlim = c(0,1), ylim = c(0,1))
+  plot(roc.2, add=TRUE, col = colors[2], lwd = 2)
+  plot(roc.3, add=TRUE, col = colors[3], lwd = 2)
+  plot(roc.4, add=TRUE, col = colors[4], lwd = 2)
+  plot(roc.5, add=TRUE, col = colors[5], lwd = 2)
+  plot(roc.6, add=TRUE, col = colors[6], lwd = 2)
+  plot(roc.7, add=TRUE, col = colors[7], lwd = 2)
+  par(xpd=FALSE)
   abline(a=0, b=1, lwd=2)
   legend(0.52, 0.45, c('KNN', 'Naive Bayes', 'Logistic', 'LDA', 'QDA', 'Decision Tree', 'Random Forests'), lty=c(1,1), lwd=c(2.5, 2.5, 2.5, 2.5), col=
-           c('blue', 'red', 'darkgreen', 'magenta', 'yellow', 'aliceblue') )
+            colors)
 }
-
-
