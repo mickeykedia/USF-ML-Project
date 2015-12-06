@@ -344,13 +344,12 @@ logistic.regression <- function(Y_train, X_train, Y_test, X_test, nfolds = 4){
   cv.fit <- train(Y_train2 ~ ., data = X_train2, method="glm", family="binomial",
                   trControl = ctrl, tuneLength = 5)
   s = summary(cv.fit)
-  cv.fit$finalModel
   glm.probs <- predict(cv.fit$finalModel, newdata = as.data.frame(X_train2), type = "response")
   d1 <- length(glm.probs)
   
   # Optimize threshold to classify 0/1 in the training set 
   lr_accuracy = c()
-  cutoff = seq(0,1,0.01)
+  cutoff = seq(0.1,0.9,0.01)
   for (i in cutoff){
     glm.pred.train <- rep(0, d1)  
     glm.pred.train[glm.probs > i] = 1
@@ -360,14 +359,14 @@ logistic.regression <- function(Y_train, X_train, Y_test, X_test, nfolds = 4){
   ind = which(lr_accuracy == max(lr_accuracy))
   # Predict in training set using the optimal threshold
   glm.pred.train <- rep(0, d1)  
-  glm.pred.train[glm.probs > cutoff[ind]] = 1
+  glm.pred.train[glm.probs > cutoff[ind[1]] = 1
   accur = mean(glm.pred.train == Y_train)
   # Predict in test set
   X_test2 = data.matrix(X_test[,colnames(X_train2)])
   glm.probs <- predict(cv.fit$finalModel, newdata = as.data.frame(X_test2), type = "response")
   d2 = length(glm.probs)
   glm.pred.test <- rep(0, d2)  
-  glm.pred.test[glm.probs > cutoff[ind]] = 1
+  glm.pred.test[glm.probs > cutoff[ind[1]]] = 1
   pr <- prediction(glm.pred.test, Y_test)
   # Return model and prediction objects
   output = c(pr, cv.fit$finalModel)
