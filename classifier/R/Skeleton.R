@@ -1,6 +1,8 @@
 library(caret, quietly = TRUE)
 library(ROCR, quietly = TRUE)
 library(class, quietly = TRUE)
+library(MASS, quietly = TRUE)
+library(e1071, quietly = TRUE)
 
 
 
@@ -41,8 +43,8 @@ identifyNonNumericVars <- function(X){
 #' @return X the dataframe with the constant variables removed
 remove.constant.variables <- function(X){
   # Identify constants
-  constants = which(unlist(lapply(X, function(x) length(unique(x))))==2)
-  if (constants){
+  constants = which(unlist(lapply(X, function(x) length(unique(x))))==1)
+  if (length(constants) > 0){
     X = X[,-constants]
   }
 }
@@ -173,6 +175,7 @@ removeNA <- function(X){
 #' 
 #' @param X The dataframe with columns corresponding to predictors and rows corresponding to observations 
 #' @return A dataframe derived from X which does not contain observations (rows) which have NA's in any column for that row 
+
 convertCategoricalToDummy <- function(X){
   to_del = c()
   p <- ncol(X)
@@ -211,7 +214,7 @@ convertCategoricalToDummy <- function(X){
 #' @return fitted model and prediction object
 k.nearest.neighbour <- function(Y_train, X_train, Y_test, X_test, k, nfolds = 4){
   # Perform cross validation
-  ctrl <- trainControl(method = "repeatedcv", number = nfolds, savePredictions = TRUE)
+  ctrl <- trainControl(method = "cv", number = nfolds, savePredictions = TRUE)
   Y_train2  = as.factor(as.character(data.matrix(Y_train)))
   # If k is not specified, then tune with 10 "k"s
   if(missing(k)) {
@@ -242,14 +245,12 @@ k.nearest.neighbour <- function(Y_train, X_train, Y_test, X_test, k, nfolds = 4)
 #' @param Y_train 
 #' @param Y_test 
 #' @return fitted model and prediction object
-naive.bayes <- function(Y_train, X_train, Y_test, X_test, nfolds = 4){
-  trCtl=trainControl(method='repeatedcv', number=nfolds, savePredictions = TRUE)
+naive.bayes <- function(Y_train, X_train, Y_test, X_test){
   Y_train2 <- as.factor(as.character(data.matrix(Y_train)))
-  model = train(Y_train2 ~ ., data = data.matrix(X_train), method="nb",
-                trControl = trCtl)
-  pred <- predict(model$finalModel,newdata = as.data.frame(X_test))
-  pr <- prediction(as.numeric(as.character(pred$class)), Y_test)
-  output <- c(pr, model$finalModel)
+  model = naiveBayes(Y_train2~. , data = X_train)
+  pred <- predict(model, newdata = as.data.frame(X_test))
+  pr <- prediction(as.numeric(as.character(pred)), Y_test)
+  output <- c(pr, model)
   return(output)
 }
 
@@ -309,12 +310,11 @@ logistic.regression <- function(Y_train, X_train, Y_test, X_test){
   glm.probs <- predict(glm.fit, newdata = as.data.frame(X_test2), type = "response")
   d2 = length(glm.probs)
   glm.pred.test <- rep(0, d2)  
-  glm.pred.test[glm.probs > cutoff[ind[1]]] = 1
+  glm.pred.test[glm.probs > cutoff[ ind[1] ] ] = 1
   pr <- prediction(as.numeric(as.character(glm.pred.test)), Y_test)
   # Return model and prediction objects
-  output = c(pr, glm.fit)
+  output = c(pr, s)
   return(output)
-  
 }
 #' Linear Discriminant Analysis Classifier 
 #' 
@@ -326,14 +326,12 @@ logistic.regression <- function(Y_train, X_train, Y_test, X_test){
 #' @param Y_train 
 #' @param Y_test 
 #' @return fitted model and prediction object
-linear.discriminant.analysis <- function(Y_train, X_train, Y_test, X_test, nfolds = 4){
-  trCtl = trainControl( method='repeatedcv', number=nfolds, savePredictions = TRUE)
+linear.discriminant.analysis <- function(Y_train, X_train, Y_test, X_test){
   Y_train2 <- as.factor(as.character(data.matrix(Y_train)))
-  model = train(Y_train2 ~ ., data = data.matrix(X_train), method="lda",
-                trControl = trCtl)
-  pred <- predict(model$finalModel, newdata = as.data.frame(data.matrix(X_test)))
+  model = lda(Y_train2 ~ ., data = X_train)
+  pred <- predict(model, newdata = as.data.frame(data.matrix(X_test)))
   pr <- prediction(as.numeric(as.character(pred$class)), Y_test)
-  output <- c(pr, model$finalModel)
+  output <- c(pr, model)
   return(output)
 }
 
@@ -347,12 +345,11 @@ linear.discriminant.analysis <- function(Y_train, X_train, Y_test, X_test, nfold
 #' @param Y_train 
 #' @param Y_test 
 #' @return fitted model and prediction object
-quadratic.discriminant.analysis <- function(Y_train, X_train, Y_test, X_test, nfolds = 4){
-  trCtl=trainControl(method='repeatedcv', number=nfolds, savePredictions = TRUE)
+quadratic.discriminant.analysis <- function(Y_train, X_train, Y_test, X_test){
   Y_train2 <- as.factor(as.character(data.matrix(Y_train)))
-  model = train(data.matrix(X_train), Y_train2,'qda',trControl=trCtl)
-  pred <- predict(model$finalModel, newdata = as.data.frame(X_test))
-  pr <- prediction(as.numeric(pred$class), as.numeric(Y_test))
+  model = qda(Y_train2 ~ ., data = X_train)
+  pred <- predict(model, newdata = as.data.frame(data.matrix(X_test)))
+  pr <- prediction(as.numeric(as.character(pred$class)), Y_test)
   output <- c(pr, model)
   return(output)
 }
@@ -370,13 +367,13 @@ quadratic.discriminant.analysis <- function(Y_train, X_train, Y_test, X_test, nf
 #' @return fitted model and prediction object
 decision.tree <- function(Y_train, X_train, Y_test, X_test, max.level = 5, nfolds = 4){
   # Perform cross validation
-  ctrl <- trainControl(method = "repeatedcv", number = nfolds, savePredictions = TRUE)
+  ctrl <- trainControl(method = "cv", number = nfolds, savePredictions = TRUE)
   Y_train2  = as.factor(as.character(data.matrix(Y_train)))
   # Fit with max level specified
   cv.fit <- train(Y_train2 ~ ., data = data.matrix(X_train), method="ctree",
                     trControl = ctrl, tuneLength = 10, controls = ctree_control(maxdepth = max.level))
   # Predict with new data
-  tree.pred = predict(cv.fit$finalModel, newdata = as.data.frame(data.matrix(X_test)), type = 'response')
+  tree.pred = predict(cv.fit, newdata = as.data.frame(data.matrix(X_test)), type = 'raw')
   pr <- prediction(as.numeric(as.character(tree.pred)), Y_test)
   # Return model and prediction objects
   output = c(pr, cv.fit$finalModel)
@@ -397,14 +394,14 @@ decision.tree <- function(Y_train, X_train, Y_test, X_test, max.level = 5, nfold
 #' @return fitted model and prediction object
 random.forest <- function(Y_train, X_train, Y_test, X_test, B, max.pred = 4,max.level = 6, nfolds = 4){
   # Perform cross validation
-  ctrl <- trainControl(method = "repeatedcv", number = nfolds, savePredictions = TRUE)
+  ctrl <- trainControl(method = "cv", number = nfolds, savePredictions = TRUE)
   Y_train2  = as.factor(as.character(data.matrix(Y_train)))
   # Fit with max
   cv.fit <- train(Y_train2 ~ ., data = data.matrix(X_train), method="rf",
                   trControl = ctrl, tuneLength = 10, controls = ctree_control(mtry = max.pred, 
                 maxdepth = max.level))
-  tree.pred = predict(cv.fit$finalModel, newdata = as.data.frame(data.matrix(X_test)), type = 'response')
-  pr <- prediction(as.numeric(as.character(tree.pred)), Y_test)
+  rf.pred = predict(cv.fit, newdata = as.data.frame(data.matrix(X_test)), type = 'raw')
+  pr <- prediction(as.numeric(as.character(rf.pred)), Y_test)
   # Return model and prediction objects
   output = c(pr, cv.fit$finalModel)
   return(output)
@@ -434,6 +431,56 @@ classifier.metrics <- function(pred.obj, print.flag = FALSE){
         specificity, '\n   Precision: ', precision)
   }
   return(c(mspe, accuracy, sensitivity, specificity, precision))
+}
+
+aggregate.results <- function(res.knn, res.nb, res.log, res.lda, res.qda, 
+                              res.tree, res.rf){
+  "Stores results in a dataframe
+  Input: Prediction objects (ROCR)"
+  
+  # Aggregate results in a dataframe
+  df_res = data.frame('Classifier' = character(7), 
+                      'MSPE_test' = double(7), 
+                      'Accuracy' = double(7), 
+                      'Sensitivity' = double(7), 
+                      'Specificity' = double(7),
+                      'Precision' = double(7))
+  df_res[,1] = c('K-Nearest Neighbor', 'Naive Bayes', 'Logistic Regression', 
+                 'Linear Discriminant Analysis', 'Quadratic Discriminant Analysis', 
+                 'Decision Tree', 'Random Forests')
+  df_res[1,2:6] = classifier.metrics(res.knn)
+  df_res[2,2:6] = classifier.metrics(res.nb)
+  df_res[3,2:6] = classifier.metrics(res.log)
+  df_res[4,2:6] = classifier.metrics(res.lda)
+  df_res[5,2:6] = classifier.metrics(res.qda)
+  df_res[6,2:6] = classifier.metrics(res.tree)
+  df_res[7,2:6] = classifier.metrics(res.rf)
+  print.data.frame(df_res[,1:5], digits = 3, right = FALSE)
+}
+
+plot_roc_curves <- function(res.knn, res.nb, res.log, res.lda, res.qda, 
+                            res.tree, res.rf){
+  # Obtain true and false positives
+  roc.1 = performance(res.knn[[1]], measure = 'tpr', x.measure = 'fpr')
+  roc.2 = performance(res.nb[[1]], measure = 'tpr', x.measure = 'fpr')
+  roc.3 = performance(res.log[[1]], measure = 'tpr', x.measure = 'fpr')
+  roc.4 = performance(res.lda[[1]], measure = 'tpr', x.measure = 'fpr')
+  roc.5 = performance(res.qda[[1]], measure = 'tpr', x.measure = 'fpr')
+  roc.6 = performance(res.tree[[1]], measure = 'tpr', x.measure = 'fpr')
+  roc.7 = performance(res.rf[[1]], measure = 'tpr', x.measure = 'fpr')
+  
+  # Plot all together
+  par(mfrow = c(1,1))
+  plot(roc.1, col = 'beige', lwd = 3, main = 'ROC curve per classifier')
+  plot(roc.2, add=TRUE, col = 'blue', lwd = 2)
+  plot(roc.3, add=TRUE, col = 'red', lwd = 2)
+  plot(roc.4, add=TRUE, col = 'darkgreen', lwd = 2)
+  plot(roc.5, add=TRUE, col = 'magenta', lwd = 2)
+  plot(roc.6, add=TRUE, col = 'yellow', lwd = 2)
+  plot(roc.7, add=TRUE, col = 'aliceblue', lwd = 2)
+  abline(a=0, b=1, lwd=2)
+  legend(0.52, 0.45, c('KNN', 'Naive Bayes', 'Logistic', 'LDA', 'QDA', 'Decision Tree', 'Random Forests'), lty=c(1,1), lwd=c(2.5, 2.5, 2.5, 2.5), col=
+           c('blue', 'red', 'darkgreen', 'magenta', 'yellow', 'aliceblue') )
 }
 
 
