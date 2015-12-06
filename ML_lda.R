@@ -1,6 +1,7 @@
 
 library(caret)
-
+library(MASS)
+library(ISLR)
 ####################Linear Discriminant Analysis################
 LDA_caret = function(X_train, Y_train, X_test, Y_test){
   trCtl=trainControl(method='repeatedcv',number=4)
@@ -11,46 +12,27 @@ LDA_caret = function(X_train, Y_train, X_test, Y_test){
   return(model, pr)
 }
 
-checkNormality  =function(tarin){
-  n <- ncol(train)
-  str <- vector()
-  for(i in 2:n){
-    predictor <- train[,i]
-    sh.out <- shapiro.test(predictor)
-    if (sh.out$p.value > 0.05){
-      outputStr <- paste0(names(train)[i], " is normally distributed.")  
-    } else{
-      outputStr <- paste0(names(train)[i], " is not normally distributed.")
-    }
-    str[i-1] <- outputStr
-  }
-  return(str)
-}
-
-
-LDA = function(train, test){
-  #####Check Normality
-  outnormal <- checkNormality(train)
-  df <- data.frame(train)
+LDA = function(Y_train, X_train, Y_test, X_test){
+  df <- data.frame(Y_train, X_train)
   # change the name of response to Y
   names(df)[1]<-c('Y')
-  coln = colnames(df)
   lda.fit <- lda(Y~., data = df, na.omit =TRUE)
   
-  dfTest <- data.frame(test)
+  dfTest <- data.frame(Y_test, X_test)
   names(dfTest)[1]<-c('Y')
-  lda.pred <- predict(lda.fit, dfTest$Y)
-  names(lda.pred)
-  
+  lda.pred <- predict(lda.fit, X_test)
   #evaluate how the method performed
   lda.class <- lda.pred$class
-  confusion <- table(lda.class, dfTest$Y)
-  #model the accuracy
-  accuracy <- mean(lda.class == dfTest$Y)
-  
-  #the posterior probability
-  posteriorProb <- lda.pred$posterior
-  return(lda.fit, lda.pred, accuracy, confusion)
+  pr <- prediction(as.numeric(lda.class), as.numeric(Y_test))
+  output = c(pr, lda.fit)
+  return(output)
+#   confusion <- table(lda.class, dfTest$Y)
+#   #model the accuracy
+#   accuracy <- mean(lda.class == dfTest$Y)
+#   
+#   #the posterior probability
+#   posteriorProb <- lda.pred$posterior
+#   return(lda.fit, lda.pred, accuracy, confusion)
 }
 
 
