@@ -88,6 +88,18 @@ identifyNonNumericVars <- function(X){
   return(output)
 }
 
+#' Identify variables consisting of one value and remove them
+#' 
+#' @param X The dataframe with columns corresponding to predictors and rows corresponding to observations
+#' @return X the dataframe with the constant variables removed
+remove.constant.variables <- function(X){
+  # Identify constants
+  constants = which(unlist(lapply(X, function(x) length(unique(x))))==2)
+  if (constants){
+    X = X[,-constants]
+  }
+}
+
 #' Identify significant predictors from all given predictors
 #' 
 #' We use the backward propogation algorithm on logistic regression to get a list of significant predictors
