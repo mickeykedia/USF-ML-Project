@@ -9,25 +9,22 @@ source("Classification.R")
 
 data("GermanCredit")
 data = GermanCredit
-data  =reposition.Y(data, 'credit_risk')
-data <- convertCategoricalToDummy(GermanCredit)
+# data  =reposition.Y(data, 'credit_risk')
+data <- convertCategoricalToDummy(data)
 data = remove.constant.variables(data)
+data = reposition.Y(data, 'credit_risk.bad')
 
-#classification.param.evaluation(data)
-#str(data)
+classification.param.evaluation(data)
+
 
 # Testing individual classifiers 
 res.knn <- classification(data, outcome.col = "credit_risk.bad", classifier = "knn")
 res.nb <- classification(data, outcome.col = "credit_risk.bad", classifier = "nb")
 res.lda <- classification(data, outcome.col = "credit_risk.bad", classifier = "lda")
 res.qda <- classification(data, outcome.col = "credit_risk.bad", classifier = "qda")
-# qda does not work with this data but the classifier is right
 res.rf <- classification(data, outcome.col = "credit_risk.bad", classifier = "rf")
 res.dt <- classification(data, outcome.col = "credit_risk.bad", classifier = "dt")
 res.lr <- classification(data, outcome.col = "credit_risk.bad", classifier = "lr")
-
-# Fake qda
-res.qda = res.lr
 
 # Aggregate results
 aggregate.results(res.knn, res.nb, res.lr, res.lda, res.qda, res.dt, res.rf)
@@ -36,7 +33,7 @@ plot_roc_curves(res.knn, res.nb, res.lr, res.lda, res.qda, res.dt, res.rf)
 # Ok!
 
 # ALL
-res.all <- classification(data, outcome.col = "credit_risk.bad")
+res.all <- classification(data, outcome.col = "credit_risk.bad", classifier = "all")
 
 
 

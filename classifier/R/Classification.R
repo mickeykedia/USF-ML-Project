@@ -34,7 +34,10 @@ classification.param.evaluation <- function(data){
   cat('\nStandard deviation of each predictor:\n')
   print(predictorStandardDeviations(data[,2:p]))
   
+  
   # (3) Which predictors are significant?
+  data = data[,!nonnum]
+  p = ncol(data)
   sig.pred = significantPredictors(data[,2:p],data[,1])
   names.sig = names(sig.pred[sig.pred == TRUE])
   cat('\nSignificant predictors in logistic regression:\n')
@@ -92,7 +95,7 @@ classification <- function(data, outcome.col, classifier, predictors, k){
     X_train <- train[-1]
     X_test <- test[-1]
   }else {
-    select.Y <- names(train)==outcome.col
+    select.Y <- (names(train)==outcome.col)
     Y_train <- train[select.Y]
     Y_test <- test[select.Y]
     
@@ -148,6 +151,18 @@ classification <- function(data, outcome.col, classifier, predictors, k){
     
   } else {
     #### DO ALL 
+    res.knn <- k.nearest.neighbour(Y_train = Y_train, X_train = X_train, Y_test = Y_test, X_test = X_test)
+    res.nb <- naive.bayes(Y_train = Y_train, X_train = X_train, Y_test = Y_test, X_test = X_test)
+    res.lr <- logistic.regression(Y_train = Y_train, X_train = X_train, Y_test = Y_test, X_test = X_test)
+    res.lda <- linear.discriminant.analysis(Y_train = Y_train, X_train = X_train, Y_test = Y_test, X_test = X_test)
+    res.qda <- quadratic.discriminant.analysis(Y_train = Y_train, X_train = X_train, Y_test = Y_test, X_test = X_test)
+    res.dt <- decision.tree(Y_train = Y_train, X_train = X_train, Y_test = Y_test, X_test = X_test)
+    res.rf <- random.forest(Y_train = Y_train, X_train = X_train, Y_test = Y_test, X_test = X_test)
+    
+    # Print ?
+    aggregate.results(res.knn, res.nb, res.lr, res.lda, res.qda, res.dt, res.rf)
+    plot_roc_curves(res.knn, res.nb, res.lr, res.lda, res.qda, res.dt, res.rf)
+    
   }
 }
 

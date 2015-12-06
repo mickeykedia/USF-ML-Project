@@ -25,7 +25,9 @@ library(e1071, quietly = TRUE)
 #' @return The name of the variable
 reposition.Y <- function(df, var.name){
   index = which(colnames(df) == var.name)
-  return( c(df[,var.name], df[,-index]) )
+  df = cbind(df[,index], df[,-index])
+  colnames(df)[1] = var.name
+  return(df)
 }
 
 
@@ -435,6 +437,16 @@ classifier.metrics <- function(pred.obj, print.flag = FALSE){
   }
   return(c(mspe, accuracy, sensitivity, specificity, precision))
 }
+barplot.classifier.metric <- function(df_col, name){
+  ind = which(df_col == max(df_col))
+  barcol = rep('aliceblue', 7)
+  barcol[ind] = 'darkblue'
+  labels = c('KNN', 'NB', 'LR', 'LDA', 'QDA', 'TREE', 'RF')
+  barplot(100 * df_col, main = name, col = color.max(df_col), ylab = paste(name, '(%)'),
+          names.arg = labels, ylim = c(0,100))
+  text(ind - 0.5 + 0.2 * ind, max(100 * df_col) + 6 , paste(round(max(100 * df_col),1),'%',sep=''))
+  box()
+}
 
 aggregate.results <- function(res.knn, res.nb, res.log, res.lda, res.qda, 
                               res.tree, res.rf){
@@ -447,7 +459,8 @@ aggregate.results <- function(res.knn, res.nb, res.log, res.lda, res.qda,
                       'Accuracy' = double(7), 
                       'Sensitivity' = double(7), 
                       'Specificity' = double(7),
-                      'Precision' = double(7))
+                      'Precision' = double(7),
+                      'Ranking' = character(7), stringsAsFactors=FALSE )
   df_res[,1] = c('K-Nearest Neighbor', 'Naive Bayes', 'Logistic Regression', 
                  'Linear Discriminant Analysis', 'Quadratic Discriminant Analysis', 
                  'Decision Tree', 'Random Forests')
@@ -458,7 +471,23 @@ aggregate.results <- function(res.knn, res.nb, res.log, res.lda, res.qda,
   df_res[5,2:6] = classifier.metrics(res.qda)
   df_res[6,2:6] = classifier.metrics(res.tree)
   df_res[7,2:6] = classifier.metrics(res.rf)
-  print.data.frame(df_res[,1:5], digits = 3, right = FALSE)
+
+  ranking = as.data.frame(sapply(df_res[,3:6], function(x) rank(x)))
+  ranking$avg = 0
+  for (i in 1:7){
+    ranking$avg[i] = mean(as.double(ranking[i,1:4]))  
+  }
+  ind = which(ranking$avg == max(ranking$avg))
+  df_res[ind,7] = 'BEST'
+  options(digits = 3)
+  print.data.frame(df_res, digits = 3, right = FALSE)
+  
+  # Plot
+  par(mfrow = c(2,2))
+  barplot.classifier.metric(df_res[,3], 'Accuracy')
+  barplot.classifier.metric(df_res[,6], 'Precision')
+  barplot.classifier.metric(df_res[,4], 'Sensitivity')
+  barplot.classifier.metric(df_res[,5], 'Specificity')
 }
 
 plot_roc_curves <- function(res.knn, res.nb, res.log, res.lda, res.qda, 
