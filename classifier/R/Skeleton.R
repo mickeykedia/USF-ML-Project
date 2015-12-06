@@ -3,7 +3,8 @@ library(ROCR, quietly = TRUE)
 library(class, quietly = TRUE)
 library(MASS, quietly = TRUE)
 library(e1071, quietly = TRUE)
-
+library(ade4, quietly = TRUE)
+library(randomForest, quierly = TRUE)
 
 
 

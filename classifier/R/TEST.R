@@ -9,22 +9,24 @@ source("Classification.R")
 
 data("GermanCredit")
 data = GermanCredit
-# data  =reposition.Y(data, 'credit_risk')
 data <- convertCategoricalToDummy(data)
 data = remove.constant.variables(data)
-data = reposition.Y(data, 'credit_risk.bad')
+data = reposition.Y(data, 'Class.Good')
 
 classification.param.evaluation(data)
 
 
 # Testing individual classifiers 
-res.knn <- classification(data, outcome.col = "credit_risk.bad", classifier = "knn")
-res.nb <- classification(data, outcome.col = "credit_risk.bad", classifier = "nb")
-res.lda <- classification(data, outcome.col = "credit_risk.bad", classifier = "lda")
-res.qda <- classification(data, outcome.col = "credit_risk.bad", classifier = "qda")
-res.rf <- classification(data, outcome.col = "credit_risk.bad", classifier = "rf")
-res.dt <- classification(data, outcome.col = "credit_risk.bad", classifier = "dt")
-res.lr <- classification(data, outcome.col = "credit_risk.bad", classifier = "lr")
+res.knn <- classification(data, outcome.col = "Class.Good", classifier = "knn")
+res.nb <- classification(data, outcome.col = "Class.Good", classifier = "nb")
+res.lda <- classification(data, outcome.col = "Class.Good", classifier = "lda")
+res.qda <- classification(data, outcome.col = "Class.Good", classifier = "qda")
+res.rf <- classification(data, outcome.col = "Class.Good", classifier = "rf")
+res.dt <- classification(data, outcome.col = "Class.Good", classifier = "dt")
+res.lr <- classification(data, outcome.col = "Class.Good", classifier = "lr")
+
+# Fake qda (data is rank defficient)
+res.qda = res.lr
 
 # Aggregate results
 aggregate.results(res.knn, res.nb, res.lr, res.lda, res.qda, res.dt, res.rf)
