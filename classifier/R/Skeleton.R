@@ -19,11 +19,14 @@ library(e1071, quietly = TRUE)
 # Split data into train and test set 
 # List of significant vars according to Random Forest or Decision Tree
 
-
-
-
-
-
+#' Reposition response variable to first column of a dataframe
+#' 
+#' @param X The dataframe with columns corresponding to predictors and rows corresponding to observations
+#' @return The name of the variable
+reposition.Y <- function(df, var.name){
+  index = which(colnames(df) == var.name)
+  return( c(df[,var.name], df[,-index]) )
+}
 
 
 #' Identify predictors which are categorical or otherwise
