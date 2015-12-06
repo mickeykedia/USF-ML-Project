@@ -159,24 +159,30 @@ classification <- function(data, outcome.col, classifier, predictors, k){
 
 ################ TESTING INDIVIDUAL CLASSIFIERS #######################
 
+data = data("GermanCredit")
 data <- convertCategoricalToDummy(GermanCredit)
-res.knn <- classification(data, outcome.col = "Class.Good", classifier = "knn")
+data = remove.constant.variables(data)
+
+
+
+res.knn <- classification(data, outcome.col = "credit_risk.bad", classifier = "knn")
 # classifier.metrics(res.knn, print.flag = TRUE)
 
-res.nb <- classification(data, outcome.col = "Class.Good", classifier = "nb")
+res.nb <- classification(data, outcome.col = "credit_risk.bad", classifier = "nb")
 # classifier.metrics(res.nb, print.flag = T)
-res.lda <- classification(data, outcome.col = "Class.Good", classifier = "lda")
-res.qda <- classification(data, outcome.col = "Class.Good", classifier = "qda")
-res.rf <- classification(data, outcome.col = "Class.Good", classifier = "rf")
+res.lda <- classification(data, outcome.col = "credit_risk.bad", classifier = "lda")
+res.qda <- classification(data, outcome.col = "credit_risk.bad", classifier = "qda")
+res.rf <- classification(data, outcome.col = "credit_risk.bad", classifier = "rf")
 # classifier.metrics(res.rf, print.flag = T)
-res.dt <- classification(data, outcome.col = "Class.Good", classifier = "dt")
+res.dt <- classification(data, outcome.col = "credit_risk.bad", classifier = "dt")
 # classifier.metrics(res.dt, print.flag = T)
 
-res.lr <- classification(data, outcome.col = "Class.Good", classifier = "lr")
+res.lr <- classification(data, outcome.col = "credit_risk.bad", classifier = "lr")
 classifier.metrics(res.lr, print.flag = T)
 
-
-
+aggregate.results(res.knn, res.nb, res.lr, res.lda, res.qda, res.dt, res.rf)
+plot_roc_curves(res.knn, res.nb, res.lr, res.lda, res.qda, res.dt, res.rf)
+  
 
 
 ################################################################################# 
@@ -244,11 +250,13 @@ plot(per)
 
 data("GermanCredit")
 data = GermanCredit
-data = cbind(data[,8], data[,-8])
+#data = cbind(data[,8], data[,-8])
 data <- convertCategoricalToDummy(GermanCredit)
+data = remove.constant.variables(data)
 
-o <- classification(data = GermanCredit, outcome.col = "Class.Good", classifier = "knn")
-
+# classification.param.evaluation(data)
+o <- classification(data = data, outcome.col = "credit_risk.bad", classifier = "knn")
+o
 roc.1 = performance(o[[1]], measure = 'tpr', x.measure = 'fpr')
 plot(roc.1)
 
