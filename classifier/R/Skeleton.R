@@ -301,7 +301,7 @@ naive.bayes <- function(Y_train, X_train, Y_test, X_test, nfolds = 4){
                 trControl = trCtl)
   pred <- predict(model$finalModel,newdata = as.data.frame(X_test))
   pr <- prediction(as.numeric(as.character(pred$class)), Y_test)
-  output <- c(pr, model)
+  output <- c(pr, model$finalModel)
   return(output)
 }
 
@@ -387,16 +387,13 @@ logistic.regression <- function(Y_train, X_train, Y_test, X_test, nfolds = 4){
 #' @return fitted model and prediction object
 linear.discriminant.analysis <- function(Y_train, X_train, Y_test, X_test, nfolds = 4){
   trCtl = trainControl( method='repeatedcv', number=nfolds, savePredictions = TRUE)
-  X_train2 <- data.matrix(X_train)
-  Y_train2 <- data.matrix(Y_train)
-  Y_train2 <- as.factor(as.character(Y_train2))
-  
-  model = train(X_train2, Y_train2,'lda', trControl=trCtl)
+  Y_train2 <- as.factor(as.character(data.matrix(Y_train)))
+  model = train(Y_train2 ~ ., data = data.matrix(X_train), method="lda",
+                trControl = trCtl)
   pred <- predict(model$finalModel, newdata = as.data.frame(data.matrix(X_test)))
-  pr <- prediction(as.numeric(pred$class), as.numeric(Y_test))
-  output <- c(pr, model)
+  pr <- prediction(as.numeric(as.character(pred$class)), Y_test)
+  output <- c(pr, model$finalModel)
   return(output)
-  
 }
 
 #' Quadratic Discriminant Analysis Classifier 
