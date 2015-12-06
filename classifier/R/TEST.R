@@ -22,11 +22,16 @@ summary(res.knn)
 res.nb <- classification(data, outcome.col = "Class.Good", classifier = "nb")
 summary(res.nb)
 res.lda <- classification(data, outcome.col = "Class.Good", classifier = "lda")
+summary(res.lda)
 #### DOESN'T WORK ######
 #res.qda <- classification(data, outcome.col = "Class.Good", classifier = "qda")
-res.rf <- classification(data, outcome.col = "Class.Good", classifier = "rf")
+# summary(res.qda)
+res.rf <- classification(data, outcome.col = "Class.Good", classifier = "rf", max.pred = 10)
+summary(res.rf)
 res.dt <- classification(data, outcome.col = "Class.Good", classifier = "dt")
+summary(res.dt)
 res.lr <- classification(data, outcome.col = "Class.Good", classifier = "lr")
+summary(res.lr)
 
 # Fake qda (data is rank defficient)
 res.qda = res.lr

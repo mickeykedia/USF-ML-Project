@@ -404,6 +404,7 @@ random.forest <- function(Y_train, X_train, Y_test, X_test, B, max.pred = 4,max.
   ctrl <- trainControl(method = "cv", number = nfolds, savePredictions = TRUE)
   Y_train2  = as.factor(as.character(data.matrix(Y_train)))
   # Fit with max
+  # @TODO mtry doesn't seem to work. Also we may want to set default mtry to sqrt(predictors)
   cv.fit <- train(Y_train2 ~ ., data = data.matrix(X_train), method="rf",
                   trControl = ctrl, tuneLength = 2, controls = ctree_control(mtry = max.pred,
                 maxdepth = max.level))
