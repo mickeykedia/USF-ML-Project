@@ -1,4 +1,3 @@
-library(ade4, quietly = TRUE)
 library(caret, quietly = TRUE)
 library(ROCR, quietly = TRUE)
 library(class, quietly = TRUE)
@@ -297,14 +296,15 @@ k.nearest.neighbour <- function(Y_train, X_train, Y_test, X_test, k, nfolds = 4)
 #' @return fitted model and prediction object
 naive.bayes <- function(Y_train, X_train, Y_test, X_test, nfolds = 4){
   trCtl=trainControl(method='repeatedcv', number=nfolds, savePredictions = TRUE)
-  X_train2 <- data.matrix(X_train)
   Y_train2 <- as.factor(as.character(data.matrix(Y_train)))
-  model = train(X_train2, Y_train2,'nb',trControl=trCtl)
+  model = train(Y_train2 ~ ., data = data.matrix(X_train), method="nb",
+                trControl = trCtl)
   pred <- predict(model$finalModel,newdata = as.data.frame(X_test))
-  pr <- prediction(as.numeric(pred$class), Y_test)
+  pr <- prediction(as.numeric(as.character(pred$class)), Y_test)
   output <- c(pr, model)
   return(output)
 }
+
 #' Logistic Regression Classifier  
 #'  
 #' Runs logistic regression, runs cross-validation to find optimal coefficients and 
