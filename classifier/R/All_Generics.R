@@ -7,6 +7,14 @@ setClass("lda.classifier", slots = list(prediction = "prediction", finalModel = 
 setClass("qda.classifier", slots = list(prediction = "prediction", finalModel = "ANY"))
 setClass("rf.classifier", slots = list(prediction = "prediction", finalModel = "ANY"))
 setClass("dt.classifier", slots = list(prediction = "prediction", finalModel = "ANY"))
+setClass("all.classifier",
+         slots = list(knn.classifier = "ANY",
+                      nb.classifier  = "ANY",
+                      lr.classifier  = "ANY",
+                      lda.classifier = "ANY",
+                      qda.classifier = "ANY",
+                      rf.classifier  = "ANY",
+                      dt.classifier  = "ANY"))
 
 ########## DEFINE plot.summary ###############
 setGeneric("plot.summary", function(o){

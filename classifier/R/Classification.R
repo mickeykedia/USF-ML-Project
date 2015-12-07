@@ -115,7 +115,6 @@ classification <- function(data, outcome.col, classifier, predictors, k, max.pre
   # preprocessing the data for the user.
 
 
-
  ####################### CLASSIFICATION ZONE #####################
 
   if (classifier=="knn"){
@@ -165,9 +164,19 @@ classification <- function(data, outcome.col, classifier, predictors, k, max.pre
     res.dt <- decision.tree(Y_train = Y_train, X_train = X_train, Y_test = Y_test, X_test = X_test)
     res.rf <- random.forest(Y_train = Y_train, X_train = X_train, Y_test = Y_test, X_test = X_test)
 
+    output <- new("all.classifier",
+                  knn.classifier = res.knn,
+                  nb.classifier  = res.nb,
+                  lr.classifier  = res.lr,
+                  lda.classifier = res.lda,
+                  qda.classifier = res.qda,
+                  dt.classifier  = res.dt,
+                  rf.classifier  = res.rf)
+
     # Print ?
-    aggregate.results(res.knn, res.nb, res.lr, res.lda, res.qda, res.dt, res.rf)
-    plot_roc_curves(res.knn, res.nb, res.lr, res.lda, res.qda, res.dt, res.rf)
+    try(aggregate.results(output))
+    try(plot_roc_curves(output))
+    return(output)
 
   }
 }
