@@ -23,31 +23,52 @@ setGeneric("plot.summary", function(o){
 
 setMethod("plot.summary", c(o = 'knn.classifier'), function(o){
   roc.1 = performance(o@prediction, measure = 'tpr', x.measure = 'fpr')
-  plot(roc.1)
+  plot(roc.1, col = 'blue', lwd = 3, main = 'KNN - ROC curve',
+       xlim = c(0,1), ylim = c(0,1))
+  par(xpd=FALSE)
+  abline(a=0, b=1, lwd=2)
 })
 setMethod("plot.summary", c(o = 'nb.classifier'), function(o){
   roc.1 = performance(o@prediction, measure = 'tpr', x.measure = 'fpr')
-  plot(roc.1)
+  plot(roc.1, col = 'blue', lwd = 3, main = 'Naive Bayes - ROC curve',
+       xlim = c(0,1), ylim = c(0,1))
+  par(xpd=FALSE)
+  abline(a=0, b=1, lwd=2)
 })
 setMethod("plot.summary", c(o = 'lda.classifier'), function(o){
   roc.1 = performance(o@prediction, measure = 'tpr', x.measure = 'fpr')
-  plot(roc.1)
+  plot(roc.1, col = 'blue', lwd = 3, main = 'LDA - ROC curve',
+       xlim = c(0,1), ylim = c(0,1))
+  par(xpd=FALSE)
+  abline(a=0, b=1, lwd=2)
 })
 setMethod("plot.summary", c(o = 'qda.classifier'), function(o){
   roc.1 = performance(o@prediction, measure = 'tpr', x.measure = 'fpr')
-  plot(roc.1)
+  plot(roc.1, col = 'blue', lwd = 3, main = 'QDA - ROC curve',
+       xlim = c(0,1), ylim = c(0,1))
+  par(xpd=FALSE)
+  abline(a=0, b=1, lwd=2)
 })
 setMethod("plot.summary", c(o = 'lr.classifier'), function(o){
   roc.1 = performance(o@prediction, measure = 'tpr', x.measure = 'fpr')
-  plot(roc.1)
+  plot(roc.1, col = 'blue', lwd = 3, main = 'Logistic Regression - ROC curve',
+       xlim = c(0,1), ylim = c(0,1))
+  par(xpd=FALSE)
+  abline(a=0, b=1, lwd=2)
 })
 setMethod("plot.summary", c(o = 'dt.classifier'), function(o){
   roc.1 = performance(o@prediction, measure = 'tpr', x.measure = 'fpr')
-  plot(roc.1)
+  plot(roc.1, col = 'blue', lwd = 3, main = 'Decision Tree - ROC curve',
+       xlim = c(0,1), ylim = c(0,1))
+  par(xpd=FALSE)
+  abline(a=0, b=1, lwd=2)
 })
 setMethod("plot.summary", c(o = 'rf.classifier'), function(o){
   roc.1 = performance(o@prediction, measure = 'tpr', x.measure = 'fpr')
-  plot(roc.1)
+  plot(roc.1, col = 'blue', lwd = 3, main = 'Random Forests - ROC curve',
+       xlim = c(0,1), ylim = c(0,1))
+  par(xpd=FALSE)
+  abline(a=0, b=1, lwd=2)
 })
 
 ########### DEFINE SUMMARIZE #############
