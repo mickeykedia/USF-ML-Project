@@ -585,16 +585,17 @@ plot_roc_curves <- function(output){
   labels <- c()
   rocs <- list()
   for(name in slotNames(output)){
-    if(!is.null(slot(output, name)))
-    roc = performance(slot(output, name)@prediction, measure = 'tpr', x.measure = 'fpr')
-    if(i == 1){
-      plot(roc, col = colors[i], lwd = 3, main = 'ROC curve per classifier',
-         xlim = c(0,1), ylim = c(0,1))
-    }else {
-      plot(roc, col = colors[i], lwd = 2, add=TRUE)
+    if(!is.null(slot(output, name))){
+      roc = performance(slot(output, name)@prediction, measure = 'tpr', x.measure = 'fpr')
+      if(i == 1){
+        plot(roc, col = colors[i], lwd = 3, main = 'ROC curve per classifier',
+           xlim = c(0,1), ylim = c(0,1))
+      }else {
+        plot(roc, col = colors[i], lwd = 2, add=TRUE)
+      }
+        labels[i] <- name.list[[name]]
+      i = i+1
     }
-      labels[i] <- name.list[[name]]
-    i = i+1
   }
   par(xpd=FALSE)
   abline(a=0, b=1, lwd=2)
