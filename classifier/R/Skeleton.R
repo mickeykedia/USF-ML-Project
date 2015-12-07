@@ -66,6 +66,7 @@ remove.constant.variables <- function(X){
 significantPredictors <- function(X, Y){
   # Fit initial regression
   X2 = data.matrix(X)
+  Y = as.factor(as.character(data.matrix(Y)))
   glm.fit <- glm(Y ~ X2, family = binomial)
   s = summary(glm.fit)
   # Remove statistically insignificant one at a time
@@ -294,7 +295,7 @@ logistic.regression <- function(Y_train, X_train, Y_test, X_test){
   res <- tryCatch(
   {
     X_train2 = data.matrix(X_train)
-    Y_train2 = data.matrix(Y_train)
+    Y_train2 = as.factor(as.character(data.matrix(Y_train)))
     # Fit initial model
     glm.fit <- glm(Y_train2 ~. , data=as.data.frame(X_train2), family = binomial)
     s = summary(glm.fit)
@@ -494,14 +495,16 @@ classifier.metrics <- function(pred.obj, print.flag = FALSE){
   }
   return(c(mspe, accuracy, sensitivity, specificity, precision))
 }
+
 barplot.classifier.metric <- function(df_col, name, labels){
   ind = which(df_col == max(df_col))
   barcol = rep('aliceblue', length(labels))
   barcol[ind] = 'darkblue'
   barplot(100 * df_col, main = name, col = barcol, ylab = paste(name, '(%)'),
           names.arg = labels, ylim = c(0,100))
+  par(xpd=TRUE)
   text(ind - 0.5 + 0.2 * ind, max(100 * df_col) + 6 , paste(round(max(100 * df_col),1),'%',sep=''))
-  box()
+  # box()
 }
 
 #'
