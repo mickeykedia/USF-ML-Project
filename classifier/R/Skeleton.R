@@ -7,7 +7,7 @@ library(ade4, quietly = TRUE)
 library(randomForest, quietly = TRUE)
 library(party, quietly = TRUE)
 
-
+source('All_Generics.R')
 
 ########## PARAM EVALUATION ##############
 # Split vars as categorical and continuous
@@ -208,14 +208,6 @@ convertCategoricalToDummy <- function(X){
 # Quadratic Discriminant Analysis
 # Decision Tree
 
-### DEFINING S4 CLASSES ################
-setClass("knn.classifier", slots = list(prediction = "prediction", finalModel = "ANY"))
-setClass("nb.classifier", slots = list(prediction = "prediction", finalModel = "ANY"))
-setClass("lr.classifier", slots = list(prediction = "prediction", finalModel = "ANY"))
-setClass("lda.classifier", slots = list(prediction = "prediction", finalModel = "ANY"))
-setClass("qda.classifier", slots = list(prediction = "prediction", finalModel = "ANY"))
-setClass("rf.classifier", slots = list(prediction = "prediction", finalModel = "ANY"))
-setClass("dt.classifier", slots = list(prediction = "prediction", finalModel = "ANY"))
 
 #' KNN classification
 #'
