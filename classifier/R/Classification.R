@@ -120,33 +120,29 @@ classification <- function(data, outcome.col, classifier, predictors, k, max.pre
 
   if (classifier=="knn"){
     o <- k.nearest.neighbour(Y_train = Y_train, X_train = X_train, Y_test = Y_test, X_test = X_test)
-    class(o) <- list("list", "knn")
+    #class(o) <- list("classificationOutput", "knn")
     return(o)
   } else if (classifier == "nb"){
     o <- naive.bayes(Y_train = Y_train, X_train = X_train, Y_test = Y_test, X_test = X_test)
-    class(o) <- list("list", "nb")
+
     return(o)
   } else if (classifier == "lr"){
     o <- logistic.regression(Y_train = Y_train, X_train = X_train, Y_test = Y_test, X_test = X_test)
-    class(o) <- list("list", "lr")
     return(o)
   } else if (classifier == "lda"){
     ## Check for only continuous variables
     # categorical.vars <- identifyCategoricalContinuousVars(X_train)
     o <- linear.discriminant.analysis(Y_train = Y_train, X_train = X_train, Y_test = Y_test, X_test = X_test)
-    class(o) <- list("list", "lda")
     return(o)
   } else if (classifier == "qda"){
     ## Check for only continuous variables
     # categorical.vars <- identifyCategoricalContinuousVars(X_train)
     o <- quadratic.discriminant.analysis(Y_train = Y_train, X_train = X_train, Y_test = Y_test, X_test = X_test)
-    class(o) <- list("list", "qda")
     return(o)
   } else if (classifier == "dt") {
     ## Need to send more params
     ## params should default to checking via cross validation
     o <- decision.tree(Y_train = Y_train, X_train = X_train, Y_test = Y_test, X_test = X_test)
-    class(o) <- list("list", "dt")
     return(o)
   } else if (classifier == "rf") {
 
@@ -157,25 +153,17 @@ classification <- function(data, outcome.col, classifier, predictors, k, max.pre
     }else {
       o <- random.forest(Y_train = Y_train, X_train = X_train, Y_test = Y_test, X_test = X_test, max.pred = max.pred)
     }
-    class(o) <- list("list", "rf")
     return(o)
 
   } else {
     #### DO ALL
     res.knn <- k.nearest.neighbour(Y_train = Y_train, X_train = X_train, Y_test = Y_test, X_test = X_test)
-    class(res.knn) <- list("list", "knn")
     res.nb <- naive.bayes(Y_train = Y_train, X_train = X_train, Y_test = Y_test, X_test = X_test)
-    class(res.nb) <- list("list", "nb")
     res.lr <- logistic.regression(Y_train = Y_train, X_train = X_train, Y_test = Y_test, X_test = X_test)
-    class(res.lr) <- list("list", "lr")
     res.lda <- linear.discriminant.analysis(Y_train = Y_train, X_train = X_train, Y_test = Y_test, X_test = X_test)
-    class(res.lda) <- list("list", "lda")
     res.qda <- quadratic.discriminant.analysis(Y_train = Y_train, X_train = X_train, Y_test = Y_test, X_test = X_test)
-    class(res.qda) <- list("list", "qda")
     res.dt <- decision.tree(Y_train = Y_train, X_train = X_train, Y_test = Y_test, X_test = X_test)
-    class(res.dt) <- list("list", "dt")
     res.rf <- random.forest(Y_train = Y_train, X_train = X_train, Y_test = Y_test, X_test = X_test)
-    class(res.rf) <- list("list", "rf")
 
     # Print ?
     aggregate.results(res.knn, res.nb, res.lr, res.lda, res.qda, res.dt, res.rf)
@@ -187,7 +175,7 @@ classification <- function(data, outcome.col, classifier, predictors, k, max.pre
 ############### PLOT/SUMMARY METHODS FOR results from classifiers ##########
 
 printClassifierMetrics <- function(o){
-  metrics <- classifier.metrics(o, print.flag = FALSE)
+  metrics <- classifier.metrics(o@prediction, print.flag = FALSE)
   cat('MSPE       : ', metrics[1], '\n',
       'Accuracy   : ', metrics[2], '\n',
       'Sensitivity: ', metrics[3], '\n',
@@ -196,36 +184,29 @@ printClassifierMetrics <- function(o){
 
 }
 
-plot <- function(o){
-  UseMethod("plot", o)
-}
-
-summary <- function(o){
-  UseMethod("summary", o)
-}
-
-
-
-
-summary.knn <- function(o){
+setGeneric("summarize", function(o){
+  standardGeneric("summarize")
+})
+setMethod("summarize", c(o = 'knn.classifier'), function(o){
   cat('\n\n***************** KNN Classification **************************',
       '*****\n\n', sep = "")
-  cat('K-Value                          : ', o$k, '\n',
-      'Number of Dimensions (predictors): ', length(o$xNames), '\n',
-      'Training set size                : ', length(o$learn$y), '\n',
-      'Test set size                    : ', length(slot(o[[1]],"labels")[[1]]), sep = "")
+  cat('K-Value                          : ', o@finalModel$k, '\n',
+      'Number of Dimensions (predictors): ', length(o@finalModel$xNames), '\n',
+      'Training set size                : ', length(o@finalModel$learn$y), '\n',
+      'Test set size                    : ', length(slot(o@prediction,"labels")[[1]]), sep = "")
 
   cat('\n\n -------- Accuracy Measures -------- ',
       '\n\n', sep = "")
 
   printClassifierMetrics(o)
-}
 
-summary.nb <- function(o){
+})
+
+setMethod("summarize", c(o='nb.classifier'), function(o){
 
   cat('\n\n***************** Naive bayes Classification **************************',
       '*****\n\n', sep = "")
-  cat('Number of predictors: ', length(o$tables), '\n',sep="")
+  cat('Number of predictors: ', length(o@finalModel$tables), '\n',sep="")
 
   cat('\n\n -------- Accuracy Measures -------- ',
       '\n\n', sep = "")
@@ -234,16 +215,16 @@ summary.nb <- function(o){
   cat('\n\n -------- Model Assumptions -------- ',
       '\n\n', sep = "")
   cat('The conditional probability distribution of each predictor for a given output is independent of other predictors', sep="")
-}
+})
 
-summary.lda <- function(o){
+setMethod("summarize",c(o = 'lda.classifier'), function(o){
 
   cat('\n\n***************** Linear Discriminant Analysis Classification **************************',
       '*****\n\n', sep = "")
 
-  cat('Number of Dimensions (predictors): ', length(o$scaling), '\n',
-      'Training set size                : ', o$N, '\n',
-      'Test set size                    : ', length(slot(o[[1]],"labels")[[1]]), sep = "")
+  cat('Number of Dimensions (predictors): ', length(o@finalModel$scaling), '\n',
+      'Training set size                : ', o@finalModel$N, '\n',
+      'Test set size                    : ', length(slot(o@prediction,"labels")[[1]]), sep = "")
   cat('\n\n -------- Accuracy Measures -------- ',
       '\n\n', sep = "")
 
@@ -254,15 +235,15 @@ summary.lda <- function(o){
     ' - All predictors have Normally distributed and independent conditional probabilities', '\n',
     ' - Same covariance matrix for ##########', sep="")
 
-}
-summary.qda <- function(o){
+})
+setMethod("summarize", c(o = 'qda.classifier'), function(o){
 
-  cat('\n\n***************** Linear Discriminant Analysis Classification **************************',
+  cat('\n\n***************** Quadratic Discriminant Analysis Classification **************************',
       '*****\n\n', sep = "")
 
-  cat('Number of Dimensions (predictors): ', length(o$scaling), '\n',
-      'Training set size                : ', o$N, '\n',
-      'Test set size                    : ', length(slot(o[[1]],"labels")[[1]]), sep = "")
+  cat('Number of Dimensions (predictors): ', length(o@finalModel$scaling), '\n',
+      'Training set size                : ', o@finalModel$N, '\n',
+      'Test set size                    : ', length(slot(o@prediction,"labels")[[1]]), sep = "")
   cat('\n\n -------- Accuracy Measures -------- ',
       '\n\n', sep = "")
 
@@ -273,60 +254,60 @@ summary.qda <- function(o){
     ' - All predictors have Normally distributed and independent conditional probabilities', '\n',
      sep="")
 
-}
+})
 
-summary.rf <- function(o){
+setMethod("summarize", c(o = "rf.classifier"), function(o){
 
   cat('\n\n***************** Random Forest Classification **************************',
       '*****\n\n', sep = "")
 
-  cat('Number of Dimensions (predictors): ', length(o$xNames), '\n',
-      'Number of Trees                  : ', o$ntree, '\n',
-      'Number of params in each tree    : ', o$mtry, '\n',
-      'Training set size                : ', length(o$y), '\n',
-      'Test set size                    : ', length(slot(o[[1]],"labels")[[1]]), sep = "")
+  cat('Number of Dimensions (predictors): ', length(o@finalModel$xNames), '\n',
+      'Number of Trees                  : ', o@finalModel$ntree, '\n',
+      'Number of params in each tree    : ', o@finalModel$mtry, '\n',
+      'Training set size                : ', length(o@finalModel$y), '\n',
+      'Test set size                    : ', length(slot(o@prediction,"labels")[[1]]), sep = "")
   cat('\n\n -------- Accuracy Measures -------- ',
       '\n\n', sep = "")
 
   printClassifierMetrics(o)
-}
+})
 
-summary.dt <- function(o){
+setMethod("summarize", c(o = "dt.classifier"), function(o){
 
   cat('\n\n***************** Decision Tree Classification **************************',
       '*****\n\n', sep = "")
 
-  cat( 'Training set size                : ', slot(slot(o[[2]], "responses"), "nobs")[[1]], '\n',
-      'Test set size                    : ', length(slot(o[[1]],"labels")[[1]]), sep = "")
+  cat( 'Training set size                : ', slot(slot(o@finalModel, "responses"), "nobs")[[1]], '\n',
+      'Test set size                    : ', length(slot(o@prediction,"labels")[[1]]), sep = "")
   cat('\n\n -------- Accuracy Measures -------- ',
       '\n\n', sep = "")
 
   printClassifierMetrics(o)
   cat('\n\n -------- Tree Structure -------- ',
       '\n\n', sep = "")
-  print(slot(o[[2]], "tree"))
-}
+  print(slot(o@finalModel, "tree"))
+})
 
-summary.lr <- function(o){
+setMethod("summarize", c(o = "lr.classifier"), function(o){
   cat('\n\n***************** Logistic Regression Classification **************************',
       '*****\n\n', sep = "")
 
-  cat('Number of Dimensions (predictors): ', length(attr(o$terms,"term.labels")), '\n',
-      'AIC                              : ', o$aic, '\n',
-      'Deviance                         : ', o$deviance, '\n',
-      'Null Deviance                    : ', o$null.deviance, '\n',
-      'Training set size                : ', length(o$deviance.resid), '\n',
-      'Test set size                    : ', length(slot(o[[1]],"labels")[[1]]), sep = "")
+  cat('Number of Dimensions (predictors): ', length(attr(o@finalModel$terms,"term.labels")), '\n',
+      'AIC                              : ', o@finalModel$aic, '\n',
+      'Deviance                         : ', o@finalModel$deviance, '\n',
+      'Null Deviance                    : ', o@finalModel$null.deviance, '\n',
+      'Training set size                : ', length(o@finalModel$deviance.resid), '\n',
+      'Test set size                    : ', length(slot(o@prediction,"labels")[[1]]), sep = "")
 
   cat('\n\n -------- Coefficients learned -------- ',
       '\n\n', sep = "")
-  print(o$coefficients)
+  print(o@finalModel$coefficients)
 
   cat('\n\n -------- Accuracy Measures -------- ',
       '\n\n', sep = "")
   printClassifierMetrics(o)
 
-}
+})
 
 
 

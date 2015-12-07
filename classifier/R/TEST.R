@@ -18,7 +18,7 @@ classification.param.evaluation(data)
 
 # Testing individual classifiers
 res.knn <- classification(data, outcome.col = "Class.Good", classifier = "knn")
-summary(res.knn)
+summarize(res.knn)
 res.nb <- classification(data, outcome.col = "Class.Good", classifier = "nb")
 summary(res.nb)
 res.lda <- classification(data, outcome.col = "Class.Good", classifier = "lda")
@@ -31,7 +31,7 @@ summary(res.rf)
 res.dt <- classification(data, outcome.col = "Class.Good", classifier = "dt")
 summary(res.dt)
 res.lr <- classification(data, outcome.col = "Class.Good", classifier = "lr")
-summary(res.lr)
+summarize(res.lr)
 
 # Fake qda (data is rank defficient)
 res.qda = res.lr

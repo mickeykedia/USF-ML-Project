@@ -208,6 +208,15 @@ convertCategoricalToDummy <- function(X){
 # Quadratic Discriminant Analysis
 # Decision Tree
 
+### DEFINING S4 CLASSES ################
+setClass("knn.classifier", slots = list(prediction = "prediction", finalModel = "ANY"))
+setClass("nb.classifier", slots = list(prediction = "prediction", finalModel = "ANY"))
+setClass("lr.classifier", slots = list(prediction = "prediction", finalModel = "ANY"))
+setClass("lda.classifier", slots = list(prediction = "prediction", finalModel = "ANY"))
+setClass("qda.classifier", slots = list(prediction = "prediction", finalModel = "ANY"))
+setClass("rf.classifier", slots = list(prediction = "prediction", finalModel = "ANY"))
+setClass("dt.classifier", slots = list(prediction = "prediction", finalModel = "ANY"))
+
 #' KNN classification
 #'
 #' Just performs the KNN classification without any preparation for the data.
@@ -237,7 +246,8 @@ k.nearest.neighbour <- function(Y_train, X_train, Y_test, X_test, k, nfolds = 4)
   pr <- prediction(as.numeric(as.character(knn.pred)), Y_test)
 
   # Return model and prediction objects
-  output = c(pr, cv.fit$finalModel)
+  output = new("knn.classifier", prediction = pr, finalModel = cv.fit$finalModel)
+
   return(output)
 }
 
@@ -257,7 +267,7 @@ naive.bayes <- function(Y_train, X_train, Y_test, X_test){
   model = naiveBayes(Y_train2~. , data = X_train)
   pred <- predict(model, newdata = as.data.frame(X_test))
   pr <- prediction(as.numeric(as.character(pred)), Y_test)
-  output <- c(pr, model)
+  output = new("nb.classifier", prediction = pr, finalModel = model)
   return(output)
 }
 
@@ -320,7 +330,7 @@ logistic.regression <- function(Y_train, X_train, Y_test, X_test){
   glm.pred.test[glm.probs > cutoff[ ind[1] ] ] = 1
   pr <- prediction(as.numeric(as.character(glm.pred.test)), Y_test)
   # Return model and prediction objects
-  output = c(pr, s)
+  output = new("lr.classifier", prediction = pr, finalModel = s)
   return(output)
 }
 #' Linear Discriminant Analysis Classifier
@@ -338,7 +348,7 @@ linear.discriminant.analysis <- function(Y_train, X_train, Y_test, X_test){
   model = lda(Y_train2 ~ ., data = X_train)
   pred <- predict(model, newdata = as.data.frame(data.matrix(X_test)))
   pr <- prediction(as.numeric(as.character(pred$class)), Y_test)
-  output <- c(pr, model)
+  output = new("lda.classifier", prediction = pr, finalModel = model)
   return(output)
 }
 
@@ -357,7 +367,7 @@ quadratic.discriminant.analysis <- function(Y_train, X_train, Y_test, X_test){
   model = qda(Y_train2 ~ ., data = X_train)
   pred <- predict(model, newdata = as.data.frame(data.matrix(X_test)))
   pr <- prediction(as.numeric(as.character(pred$class)), Y_test)
-  output <- c(pr, model)
+  output = new("qda.classifier", prediction = pr, finalModel = model)
   return(output)
 }
 
@@ -383,7 +393,7 @@ decision.tree <- function(Y_train, X_train, Y_test, X_test, max.level = 5, nfold
   tree.pred = predict(cv.fit, newdata = as.data.frame(data.matrix(X_test)), type = 'raw')
   pr <- prediction(as.numeric(as.character(tree.pred)), Y_test)
   # Return model and prediction objects
-  output = c(pr, cv.fit$finalModel)
+  output = new("dt.classifier", prediction = pr, finalModel = cv.fit$finalModel)
   return(output)
 }
 #' Random Forest Classifier
@@ -411,7 +421,7 @@ random.forest <- function(Y_train, X_train, Y_test, X_test, B, max.pred = 4,max.
   rf.pred = predict(cv.fit, newdata = as.data.frame(data.matrix(X_test)), type = 'raw')
   pr <- prediction(as.numeric(as.character(rf.pred)), Y_test)
   # Return model and prediction objects
-  output = c(pr, cv.fit$finalModel)
+  output = new("rf.classifier", prediction = pr, finalModel = cv.fit$finalModel)
   return(output)
 
 }
@@ -426,12 +436,12 @@ classifier.metrics <- function(pred.obj, print.flag = FALSE){
   "Return classifier statistics in the test set
   Input: Prediction object (ROCR)
   Output: A list with MSPE, accuracy, sensitivity, specificity and precision"
-  mspe = mspe = mean((slot(pred.obj[[1]], 'predictions')[[1]] -
-                        as.numeric(as.character(slot(pred.obj[[1]], 'labels')[[1]])))^2)
-  accuracy = slot(performance(pred.obj[[1]], "acc"), "y.values")[[1]][2]
-  sensitivity = slot(performance(pred.obj[[1]], "sens"), "y.values")[[1]][2]
-  specificity = slot(performance(pred.obj[[1]], "spec"), "y.values")[[1]][2]
-  precision = slot(performance(pred.obj[[1]], "prec"), "y.values")[[1]][2]
+  mspe = mspe = mean((slot(pred.obj, 'predictions')[[1]] -
+                        as.numeric(as.character(slot(pred.obj, 'labels')[[1]])))^2)
+  accuracy = slot(performance(pred.obj, "acc"), "y.values")[[1]][2]
+  sensitivity = slot(performance(pred.obj, "sens"), "y.values")[[1]][2]
+  specificity = slot(performance(pred.obj, "spec"), "y.values")[[1]][2]
+  precision = slot(performance(pred.obj, "prec"), "y.values")[[1]][2]
 
   if (print.flag){
     cat('\n- Classifier metrics:\n   MSPE: ', mspe, '\n   Accuracy: ',
@@ -467,13 +477,13 @@ aggregate.results <- function(res.knn, res.nb, res.log, res.lda, res.qda,
   df_res[,1] = c('K-Nearest Neighbor', 'Naive Bayes', 'Logistic Regression',
                  'Linear Discriminant Analysis', 'Quadratic Discriminant Analysis',
                  'Decision Tree', 'Random Forests')
-  df_res[1,2:6] = classifier.metrics(res.knn)
-  df_res[2,2:6] = classifier.metrics(res.nb)
-  df_res[3,2:6] = classifier.metrics(res.log)
-  df_res[4,2:6] = classifier.metrics(res.lda)
-  df_res[5,2:6] = classifier.metrics(res.qda)
-  df_res[6,2:6] = classifier.metrics(res.tree)
-  df_res[7,2:6] = classifier.metrics(res.rf)
+  df_res[1,2:6] = classifier.metrics(res.knn@prediction)
+  df_res[2,2:6] = classifier.metrics(res.nb@prediction)
+  df_res[3,2:6] = classifier.metrics(res.log@prediction)
+  df_res[4,2:6] = classifier.metrics(res.lda@prediction)
+  df_res[5,2:6] = classifier.metrics(res.qda@prediction)
+  df_res[6,2:6] = classifier.metrics(res.tree@prediction)
+  df_res[7,2:6] = classifier.metrics(res.rf@prediction)
 
   ranking = as.data.frame(sapply(df_res[,3:6], function(x) rank(x)))
   ranking$avg = 0
@@ -498,13 +508,13 @@ aggregate.results <- function(res.knn, res.nb, res.log, res.lda, res.qda,
 plot_roc_curves <- function(res.knn, res.nb, res.log, res.lda, res.qda,
                             res.tree, res.rf){
   # Obtain true and false positives
-  roc.1 = performance(res.knn[[1]], measure = 'tpr', x.measure = 'fpr')
-  roc.2 = performance(res.nb[[1]], measure = 'tpr', x.measure = 'fpr')
-  roc.3 = performance(res.log[[1]], measure = 'tpr', x.measure = 'fpr')
-  roc.4 = performance(res.lda[[1]], measure = 'tpr', x.measure = 'fpr')
-  roc.5 = performance(res.qda[[1]], measure = 'tpr', x.measure = 'fpr')
-  roc.6 = performance(res.tree[[1]], measure = 'tpr', x.measure = 'fpr')
-  roc.7 = performance(res.rf[[1]], measure = 'tpr', x.measure = 'fpr')
+  roc.1 = performance(res.knn@prediction, measure = 'tpr', x.measure = 'fpr')
+  roc.2 = performance(res.nb@prediction, measure = 'tpr', x.measure = 'fpr')
+  roc.3 = performance(res.log@prediction, measure = 'tpr', x.measure = 'fpr')
+  roc.4 = performance(res.lda@prediction, measure = 'tpr', x.measure = 'fpr')
+  roc.5 = performance(res.qda@prediction, measure = 'tpr', x.measure = 'fpr')
+  roc.6 = performance(res.tree@prediction, measure = 'tpr', x.measure = 'fpr')
+  roc.7 = performance(res.rf@prediction, measure = 'tpr', x.measure = 'fpr')
 
   # Plot all together
   par(mfrow = c(1,1))
