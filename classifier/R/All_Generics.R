@@ -25,6 +25,8 @@ setMethod("plot.summary", c(o = 'knn.classifier'), function(o){
   roc.1 = performance(o@prediction, measure = 'tpr', x.measure = 'fpr')
   plot(roc.1, col = 'blue', lwd = 3, main = 'KNN - ROC curve',
        xlim = c(0,1), ylim = c(0,1))
+  legend(0.5, 0.3, c('KNN', 'Non-discriminant line'), lty=c(1,1), lwd=c(2.5, 2.5), col=
+           c('blue', 'black'))
   par(xpd=FALSE)
   abline(a=0, b=1, lwd=2)
 })
@@ -32,13 +34,18 @@ setMethod("plot.summary", c(o = 'nb.classifier'), function(o){
   roc.1 = performance(o@prediction, measure = 'tpr', x.measure = 'fpr')
   plot(roc.1, col = 'blue', lwd = 3, main = 'Naive Bayes - ROC curve',
        xlim = c(0,1), ylim = c(0,1))
+  legend(0.5, 0.3, c('Naive Bayes', 'Non-discriminant line'), lty=c(1,1), lwd=c(2.5, 2.5), col=
+           c('blue', 'black'))
   par(xpd=FALSE)
   abline(a=0, b=1, lwd=2)
+  
 })
 setMethod("plot.summary", c(o = 'lda.classifier'), function(o){
   roc.1 = performance(o@prediction, measure = 'tpr', x.measure = 'fpr')
   plot(roc.1, col = 'blue', lwd = 3, main = 'LDA - ROC curve',
        xlim = c(0,1), ylim = c(0,1))
+  legend(0.5, 0.3, c('LDA', 'Non-discriminant line'), lty=c(1,1), lwd=c(2.5, 2.5), col=
+           c('blue', 'black'))
   par(xpd=FALSE)
   abline(a=0, b=1, lwd=2)
 })
@@ -46,6 +53,8 @@ setMethod("plot.summary", c(o = 'qda.classifier'), function(o){
   roc.1 = performance(o@prediction, measure = 'tpr', x.measure = 'fpr')
   plot(roc.1, col = 'blue', lwd = 3, main = 'QDA - ROC curve',
        xlim = c(0,1), ylim = c(0,1))
+  legend(0.5, 0.3, c('QDA', 'Non-discriminant line'), lty=c(1,1), lwd=c(2.5, 2.5), col=
+           c('blue', 'black'))
   par(xpd=FALSE)
   abline(a=0, b=1, lwd=2)
 })
@@ -53,6 +62,8 @@ setMethod("plot.summary", c(o = 'lr.classifier'), function(o){
   roc.1 = performance(o@prediction, measure = 'tpr', x.measure = 'fpr')
   plot(roc.1, col = 'blue', lwd = 3, main = 'Logistic Regression - ROC curve',
        xlim = c(0,1), ylim = c(0,1))
+  legend(0.5, 0.3, c('Logistic Regression', 'Non-discriminant line'), lty=c(1,1), lwd=c(2.5, 2.5), col=
+           c('blue', 'black'))
   par(xpd=FALSE)
   abline(a=0, b=1, lwd=2)
 })
@@ -60,6 +71,8 @@ setMethod("plot.summary", c(o = 'dt.classifier'), function(o){
   roc.1 = performance(o@prediction, measure = 'tpr', x.measure = 'fpr')
   plot(roc.1, col = 'blue', lwd = 3, main = 'Decision Tree - ROC curve',
        xlim = c(0,1), ylim = c(0,1))
+  legend(0.5, 0.3, c('Decision Tree', 'Non-discriminant line'), lty=c(1,1), lwd=c(2.5, 2.5), col=
+           c('blue', 'black'))
   par(xpd=FALSE)
   abline(a=0, b=1, lwd=2)
 })
@@ -67,6 +80,8 @@ setMethod("plot.summary", c(o = 'rf.classifier'), function(o){
   roc.1 = performance(o@prediction, measure = 'tpr', x.measure = 'fpr')
   plot(roc.1, col = 'blue', lwd = 3, main = 'Random Forests - ROC curve',
        xlim = c(0,1), ylim = c(0,1))
+  legend(0.5, 0.3, c('Random Forest', 'Non-discriminant line'), lty=c(1,1), lwd=c(2.5, 2.5), col=
+           c('blue', 'black'))
   par(xpd=FALSE)
   abline(a=0, b=1, lwd=2)
 })
