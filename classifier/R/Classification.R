@@ -27,7 +27,12 @@ classification.param.evaluation <- function(data){
       'Total number of variables:          ', p, '\n',
       ' - Number of non-numeric variables: ', sum(nonnum), '\n',
       ' - Number of numeric variables:     ', p - sum(nonnum), '\n', sep = "")
-
+  
+  if (n < (p - 1)){
+    cat('\nData anomaly: Larger number of variables than observations (n<p)\n')
+  }
+  
+  
   # (2) Mean and standard deviation of each predictor
   cat('\nMean of each predictor:\n')
   print(predictorMeans(data[,2:p]))
