@@ -289,7 +289,7 @@ naive.bayes <- function(Y_train, X_train, Y_test, X_test){
 #' @param Y_test
 #' @param nfolds Number of folds in the cross validation
 #' @return fitted model and prediction object
-logistic.regression <- function(Y_train, X_train, Y_test, X_test){
+logistic.regression <- function(Y_train, X_train, Y_test, X_test, threshold.prob = NULL){
   # Copy the training set
   output <- NULL
   res <- tryCatch(
@@ -321,25 +321,29 @@ logistic.regression <- function(Y_train, X_train, Y_test, X_test){
     d1 <- length(glm.probs)
 
     # Optimize threshold probability to classify 0/1 in the training set
-    lr_accuracy = c()
-    cutoff = seq(0, 1, 0.01)
-    for (i in cutoff){
-      glm.pred.train <- rep(0, d1)
-      glm.pred.train[glm.probs > i] = 1
-      accur = mean(glm.pred.train == Y_train)
-      lr_accuracy = c(lr_accuracy, accur)
+    if (is.null(threshold.prob)){
+      lr_accuracy = c()
+      cutoff = seq(0, 1, 0.01)
+      for (i in cutoff){
+        glm.pred.train <- rep(0, d1)
+        glm.pred.train[glm.probs > i] = 1
+        accur = mean(glm.pred.train == Y_train)
+        lr_accuracy = c(lr_accuracy, accur)
+      }
+      ind = which(lr_accuracy == max(lr_accuracy))[1]
+      threshold.prob = cutoff[ind]
     }
-    ind = which(lr_accuracy == max(lr_accuracy))
+    
     # Predict in training set using the optimal threshold
     glm.pred.train <- rep(0, d1)
-    glm.pred.train[glm.probs > cutoff[ ind[1] ] ] = 1
+    glm.pred.train[glm.probs > threshold.prob] = 1
     accur = mean(glm.pred.train == Y_train)
     # Predict in test set
     X_test2 = X_test[,colnames(X_train2)]
     glm.probs <- predict(glm.fit, newdata = as.data.frame(X_test2), type = "response")
     d2 = length(glm.probs)
     glm.pred.test <- rep(0, d2)
-    glm.pred.test[glm.probs > cutoff[ ind[1] ] ] = 1
+    glm.pred.test[glm.probs > threshold.prob ] = 1
     pr <- prediction(as.numeric(as.character(glm.pred.test)), Y_test)
     # Return model and prediction objects
     output = new("lr.classifier", prediction = pr, finalModel = s)
