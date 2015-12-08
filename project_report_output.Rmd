@@ -1,0 +1,127 @@
+---
+title: "Machine_learning_Classifier"
+author: "Jaimer Pastor, Mayank Kedia, Swetha Reddy"
+date: "December 8, 2015"
+output: html_document
+---
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+rm(list=ls())
+
+source("Classification.R")
+```
+
+The data set from 
+
+```{r, echo=FALSE}
+setwd("/MSAN_USF/courses_fall/621-MachineLearning/project/MLProject/USF-ML-Project/")
+data <- read.table('skin_nonskin.txt', header = FALSE)
+colnames(data) <- c('B','G', 'R', 'Skin')
+data <- reposition.Y(data, 'Skin')
+str(data)
+
+```
+
+
+The function classification.predictor.evaluation does the parameter evaluation from the data set. It returns number of Principal components required to explain 90% of the variance.  This method also gives the summary statistics of the dataset.
+```{r, echo=FALSE}
+classification.predictor.evaluation(data)
+
+```
+
+We just use random sample of 7000 rows from the original dataset of 300k records. 
+
+```{r, echo=FALSE}
+index <- sample(nrow(data), 7000)
+test.index <- index[1:1000]
+train.index <- index[1001:length(index)]
+test.data <- data[test.index, ]
+data <- data[train.index, ]
+
+```
+
+This method checks all the classifiers and returns the summary comparision of all the statistics together.
+
+```{r, echo=FALSE}
+res.all <- classification(data, outcome.col = "Skin", classifier = "all")
+
+```
+
+Here we test the KNN classfier alone with the classifier type we passed in as classifier = "knn" and the specify the response column as "Skin". The output is ROC curve for the classifier. 
+```{r, echo=FALSE}
+res.knn <- classification(data, outcome.col = "Skin", classifier = "knn")
+summarize(res.knn)
+plot.summary(res.knn)
+
+```
+
+Here we test the Naive Bayes classfier alone with the classifier type we passed in as classifier = "nb" and the specify the response column as "Skin".
+The output is a sumamry of the accuracy, MSPE, Sensitivity, Specificity and Precision of the classifier.
+
+```{r, echo=FALSE}
+res.nb <- classification(data, outcome.col = "Skin", classifier = "nb")
+summarize(res.nb)
+plot.summary(res.nb)
+
+```
+
+Here we test the Linear discriminant analysis classfier, with the classifier type we passed in as classifier = "lda" and the specify the response column as "Skin". The output is a sumamry of the accuracy, MSPE, Sensitivity, Specificity and Precision of the classifier. The ROC curve is output.
+
+
+```{r, echo=FALSE}
+res.lda <- classification(data, outcome.col = "Skin", classifier = "lda")
+summarize(res.lda)
+plot.summary(res.lda)
+
+```
+
+Here we test the Linear discriminant analysis classfier, with the classifier type we passed in as classifier = "lda" and the specify the response column as "Skin". The output is a sumamry of the accuracy, MSPE, Sensitivity, Specificity and Precision of the classifier. The ROC curve is output.
+
+```{r, echo=FALSE}
+res.qda <- classification(data, outcome.col = "Skin", classifier = "qda")
+summarize(res.qda)
+plot.summary(res.qda)
+
+```
+
+Here we test the Random forest classfier, with the classifier type we passed in as classifier = "rf" and the specify the response column as "Skin". The output is a sumamry of the accuracy, MSPE, Sensitivity, Specificity and Precision of the classifier. The ROC curve is output.
+
+
+```{r, echo=FALSE}
+res.rf <- classification(data, outcome.col = "Skin", classifier = "rf", max.pred = 2)
+summarize(res.rf)
+plot.summary(res.rf)
+```
+
+Here we test the decision tree classfier, with the classifier type we passed in as classifier = "dt" and the specify the response column as "Skin". The output is a sumamry of the accuracy, MSPE, Sensitivity, Specificity and Precision of the classifier. The ROC curve is output.
+
+```{r, echo=FALSE}
+res.dt <- classification(data, outcome.col = "Skin", classifier = "dt")
+summarize(res.dt)
+plot.summary(res.dt)
+```
+
+
+Here we test the Logistic regression classfier, with the classifier type we passed in as classifier = "lr" and the specify the response column as "Skin". The output is a sumamry of the accuracy, MSPE, Sensitivity, Specificity and Precision of the classifier. The ROC curve is output.
+
+```{r, echo=FALSE}
+res.lr <- classification(data, outcome.col = "Skin", classifier = "lr")
+summarize(res.lr)
+plot.summary(res.lr)
+
+```
+
+
+From the individual classifier object user can access handle to the object the rss.knn@finalModel, which can be used for  prediction. The prediction function is used to get the ROC curves for the model. And classifier metrics is used to get all the metreics for that particular classifier. The print.flag = TRUE needs to be specified if you need the output printed to the console.
+
+```{r, echo=FALSE}
+
+results <- predict(res.knn@finalModel, test.data[-1], type = "class")
+pred <- prediction(as.numeric(as.character(results)), test.data[1])
+classifier.metrics(pred, print.flag = TRUE)
+
+```
