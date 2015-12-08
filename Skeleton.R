@@ -548,12 +548,12 @@ aggregate.results <- function(output){
   df_res = df_res[-j,]
 
 
-  ranking = as.data.frame(sapply(df_res[,3:6], function(x) rank(x)))
+  ranking = as.data.frame(lapply(df_res[,3:6], function(x) rank(x)))
   ranking$avg = 0
-  for (i in nrow(df_res)){
+  for (i in 1:nrow(df_res)){
     ranking$avg[i] = mean(as.double(ranking[i,1:4]))
   }
-  ind = which(ranking$avg == max(ranking$avg))
+  ind = which(ranking$avg == max(ranking$avg))[1]
   df_res[ind,7] = 'BEST'
   options(digits = 3)
   cat('\n')
