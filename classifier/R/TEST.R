@@ -31,7 +31,7 @@ res.lda <- classification(data, outcome.col = "Skin", classifier = "lda")
 summarize(res.lda)
 plot.summary(res.lda)
 res.qda <- classification(data, outcome.col = "Skin", classifier = "qda")
-summary(res.qda)
+summarize(res.qda)
 res.rf <- classification(data, outcome.col = "Skin", classifier = "rf", max.pred = 2)
 summarize(res.rf)
 plot.summary(res.rf)
@@ -92,7 +92,7 @@ plot.summary(res.lr)
 
 
 # ALL
-res.all <- classification(data, outcome.col = "Class.Good", classifier = "all")
+res.all <- classification(data, outcome.col = "Skin", classifier = "all")
 
 
 

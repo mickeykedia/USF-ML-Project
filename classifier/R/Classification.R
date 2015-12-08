@@ -27,12 +27,12 @@ classification.param.evaluation <- function(data){
       'Total number of variables:          ', p, '\n',
       ' - Number of non-numeric variables: ', sum(nonnum), '\n',
       ' - Number of numeric variables:     ', p - sum(nonnum), '\n', sep = "")
-  
+
   if (n < (p - 1)){
     cat('\nData anomaly: Larger number of variables than observations (n<p)\n')
   }
-  
-  
+
+
   # (2) Mean and standard deviation of each predictor
   cat('\nMean of each predictor:\n')
   print(predictorMeans(data[,2:p]))
@@ -80,12 +80,19 @@ classification.param.evaluation <- function(data){
 #'
 #' @param The data frame with the first column as the categorical variable which has to be predicted and the rest of the columns as predictors. If the first column is not the binary class then that must be specified in the outcome.col setting
 #' @param outcome.col Explicitly sending a column name to be used as the binary class for which classifier is to be built. If this isn't supplied it is assumed that the first column is the binary class.
-#' @param classifier The classification method to use. This can be one of "all", "knn", "nb", ...
+#' @param classifier The classification method to use. This can be one of "all", "knn", "nb", "lr", "lda", "qda", "dt", "rf"
 #' @param predictors a boolean list of predictors to be used for the classifiers. If none is supplied then all predictors are used.
 #' @param k The tuning parameter for the k-means algorithm. If k is not supplied then the classifier will perform Cross validation to choose appropriate k
 #' @param max.pred Number of params in each tree for the Random Forest classifier, defaults to
-#' @return
-classification <- function(data, outcome.col, classifier, predictors, k, max.pred){
+#' @param nfolds Number of folds for cross validation for fitting the classification model chosen. This applies only for KNN, Decision Tree and Random Forest.
+#' @return When an individual classifier is called then an S4 object of class x.classifier is returned,
+#' where x is equivalent to the option for classifier chosen by the user. Each of the x.classifier object apart from the all.classifier object
+#' contains two slots 'prediction' and 'finalModel' which can be accessed by using the @ operator. Further
+#' the user can use the predict function with the finalModel object and specify a dataset over which the predictions have to be made.
+#' The finalModel objects are all from the caret package and so the predict function will behave as expected to work on model object from caret.
+#' The all.classifier object which is returned when the option specified for the classifier is 'all' has all the individual
+#' classifiers within it in slots named as x.classifier.
+classification <- function(data, outcome.col, classifier, predictors, k, max.pred, nfolds){
 
   data <- removeNA(data)
 
@@ -122,52 +129,61 @@ classification <- function(data, outcome.col, classifier, predictors, k, max.pre
 
  ####################### CLASSIFICATION ZONE #####################
 
+  if(missing(nfolds)){
+    nfolds = 4
+  }
   if (classifier=="knn"){
-    o <- k.nearest.neighbour(Y_train = Y_train, X_train = X_train, Y_test = Y_test, X_test = X_test)
-    #class(o) <- list("classificationOutput", "knn")
+    if(missing(k)){
+      o <- k.nearest.neighbour(Y_train = Y_train, X_train = X_train, Y_test = Y_test, X_test = X_test, nfolds = nfolds)
+    }else{
+      o <- k.nearest.neighbour(Y_train = Y_train, X_train = X_train, Y_test = Y_test, X_test = X_test, nfolds = nfolds, k = k)
+    }
     return(o)
   } else if (classifier == "nb"){
     o <- naive.bayes(Y_train = Y_train, X_train = X_train, Y_test = Y_test, X_test = X_test)
-
     return(o)
   } else if (classifier == "lr"){
     o <- logistic.regression(Y_train = Y_train, X_train = X_train, Y_test = Y_test, X_test = X_test)
     return(o)
   } else if (classifier == "lda"){
-    ## Check for only continuous variables
-    # categorical.vars <- identifyCategoricalContinuousVars(X_train)
     o <- linear.discriminant.analysis(Y_train = Y_train, X_train = X_train, Y_test = Y_test, X_test = X_test)
     return(o)
   } else if (classifier == "qda"){
-    ## Check for only continuous variables
-    # categorical.vars <- identifyCategoricalContinuousVars(X_train)
     o <- quadratic.discriminant.analysis(Y_train = Y_train, X_train = X_train, Y_test = Y_test, X_test = X_test)
     return(o)
   } else if (classifier == "dt") {
-    ## Need to send more params
-    ## params should default to checking via cross validation
-    o <- decision.tree(Y_train = Y_train, X_train = X_train, Y_test = Y_test, X_test = X_test)
+    o <- decision.tree(Y_train = Y_train, X_train = X_train, Y_test = Y_test, X_test = X_test, nfolds = nfolds)
     return(o)
   } else if (classifier == "rf") {
 
-    ## Need to send more params
-    ## params should default to checking via cross validation
+    ### Setting nfolds to default value of 4 when its missing.
     if(missing(max.pred)){
-      o <- random.forest(Y_train = Y_train, X_train = X_train, Y_test = Y_test, X_test = X_test)
+      o <- random.forest(Y_train = Y_train, X_train = X_train, Y_test = Y_test, X_test = X_test, nfolds = nfolds)
     }else {
-      o <- random.forest(Y_train = Y_train, X_train = X_train, Y_test = Y_test, X_test = X_test, max.pred = max.pred)
+      o <- random.forest(Y_train = Y_train, X_train = X_train, Y_test = Y_test, X_test = X_test, max.pred = max.pred, nfolds = nfolds)
     }
     return(o)
 
   } else {
     #### DO ALL
-    res.knn <- k.nearest.neighbour(Y_train = Y_train, X_train = X_train, Y_test = Y_test, X_test = X_test)
+    if(missing(max.pred)){
+      res.rf <- random.forest(Y_train = Y_train, X_train = X_train, Y_test = Y_test, X_test = X_test, nfolds = nfolds)
+    }else {
+      res.rf <- random.forest(Y_train = Y_train, X_train = X_train, Y_test = Y_test, X_test = X_test, nfolds = nfolds, max.pred = max.pred)
+    }
+
+    if(missing(k)){
+      res.knn <- k.nearest.neighbour(Y_train = Y_train, X_train = X_train, Y_test = Y_test, X_test = X_test, nfolds = nfolds)
+    }else{
+      res.knn <- k.nearest.neighbour(Y_train = Y_train, X_train = X_train, Y_test = Y_test, X_test = X_test, nfolds = nfolds, k = k)
+
+    }
     res.nb <- naive.bayes(Y_train = Y_train, X_train = X_train, Y_test = Y_test, X_test = X_test)
     res.lr <- logistic.regression(Y_train = Y_train, X_train = X_train, Y_test = Y_test, X_test = X_test)
+
     res.lda <- linear.discriminant.analysis(Y_train = Y_train, X_train = X_train, Y_test = Y_test, X_test = X_test)
     res.qda <- quadratic.discriminant.analysis(Y_train = Y_train, X_train = X_train, Y_test = Y_test, X_test = X_test)
-    res.dt <- decision.tree(Y_train = Y_train, X_train = X_train, Y_test = Y_test, X_test = X_test)
-    res.rf <- random.forest(Y_train = Y_train, X_train = X_train, Y_test = Y_test, X_test = X_test)
+    res.dt <- decision.tree(Y_train = Y_train, X_train = X_train, Y_test = Y_test, X_test = X_test, nfolds = nfolds)
 
     output <- new("all.classifier",
                   knn.classifier = res.knn,
@@ -178,7 +194,6 @@ classification <- function(data, outcome.col, classifier, predictors, k, max.pre
                   dt.classifier  = res.dt,
                   rf.classifier  = res.rf)
 
-    # Print ?
     try(aggregate.results(output))
     try(plot_roc_curves(output))
     return(output)
