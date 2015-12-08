@@ -102,7 +102,7 @@ predictorMeans <- function(X){
   X_numeric = X[,numeric_cols]
   var_mean = lapply(X_numeric, mean, na.rm = TRUE)
   return(unlist(var_mean))
-
+  
 }
 
 
@@ -117,7 +117,7 @@ predictorStandardDeviations <- function(X){
   X_numeric = X[,numeric_cols]
   var_sd = lapply(X_numeric, sd, na.rm = TRUE)
   return(unlist(var_sd))
-
+  
 }
 
 #' Variance Explained by component
@@ -152,7 +152,7 @@ predictorCollinearity <- function(X, threshold = 0.9){
   # Subset those higher than threshold
   df_cor = subset(df_cor, abs(df_cor$Freq) > threshold)
   colnames(df_cor)[3] = 'Correlation'
-
+  
   if (nrow(df_cor) == 0){
     cat('There are no collinear variables in the dataset')
   }else{
@@ -166,7 +166,7 @@ predictorCollinearity <- function(X, threshold = 0.9){
 # Check for NA's and remove those rows
 # Convert categorical variables to dummy variables
 # Scale and Center data
-  # Use inbuilt function
+# Use inbuilt function
 
 #' Remove rows which have NA
 #'
@@ -192,11 +192,11 @@ convertCategoricalToDummy <- function(X){
       X_temp = acm.disjonctif(X[,i, drop=FALSE])
       X = cbind(X, X_temp[-1])
       to_del[length(to_del)+1] = i
-      }
     }
+  }
   X = X[,-to_del]
   return(X)
-
+  
 }
 
 
@@ -225,29 +225,29 @@ k.nearest.neighbour <- function(Y_train, X_train, Y_test, X_test, k, nfolds = 4)
   # Perform cross validation
   output <- NULL
   res <- tryCatch(
-  {
-    ctrl <- trainControl(method = "cv", number = nfolds, savePredictions = TRUE)
-    Y_train2  = as.factor(as.character(data.matrix(Y_train)))
-    # If k is not specified, then tune with 10 "k"s
-    if(missing(k)) {
-      cv.fit <- train(Y_train2 ~ ., data = data.matrix(X_train), method="knn",
-                      trControl = ctrl, tuneLength = 10)
-      k = cv.fit$bestTune[[1]]
-    }else{
-      # Otherwise fit (or tune) with the specified value(s) of k
-      cv.fit <- train(Y_train2 ~ ., data = data.matrix(X_train), method="knn",
-                      trControl = ctrl, tuneGrid = data.frame(k))
-    }
-    knn.pred = predict(cv.fit$finalModel, newdata = as.data.frame(X_test), type = "class")
-    pr <- prediction(as.numeric(as.character(knn.pred)), Y_test)
-
-    # Return model and prediction objects
-    output = new("knn.classifier", prediction = pr, finalModel = cv.fit$finalModel)
-  }, error = function(e){
-    # @TODO also print original message
-    print("K Nearest Neighbours Failed. ")
-  })
-
+    {
+      ctrl <- trainControl(method = "cv", number = nfolds, savePredictions = TRUE)
+      Y_train2  = as.factor(as.character(data.matrix(Y_train)))
+      # If k is not specified, then tune with 10 "k"s
+      if(missing(k)) {
+        cv.fit <- train(Y_train2 ~ ., data = data.matrix(X_train), method="knn",
+                        trControl = ctrl, tuneLength = 10)
+        k = cv.fit$bestTune[[1]]
+      }else{
+        # Otherwise fit (or tune) with the specified value(s) of k
+        cv.fit <- train(Y_train2 ~ ., data = data.matrix(X_train), method="knn",
+                        trControl = ctrl, tuneGrid = data.frame(k))
+      }
+      knn.pred = predict(cv.fit$finalModel, newdata = as.data.frame(X_test), type = "class")
+      pr <- prediction(as.numeric(as.character(knn.pred)), Y_test)
+      
+      # Return model and prediction objects
+      output = new("knn.classifier", prediction = pr, finalModel = cv.fit$finalModel)
+    }, error = function(e){
+      msg <- paste0("K Nearest Neighbours Failed. ", e$message)
+      print(msg)
+    })
+  
   return(output)
 }
 
@@ -263,19 +263,19 @@ k.nearest.neighbour <- function(Y_train, X_train, Y_test, X_test, k, nfolds = 4)
 #' @param Y_test
 #' @return fitted model and prediction object
 naive.bayes <- function(Y_train, X_train, Y_test, X_test){
-
+  
   output <- NULL
   res <- tryCatch(
-  {
-    Y_train2 <- as.factor(as.character(data.matrix(Y_train)))
-    model = naiveBayes(Y_train2~. , data = X_train)
-    pred <- predict(model, newdata = as.data.frame(X_test))
-    pr <- prediction(as.numeric(as.character(pred)), Y_test)
-    output = new("nb.classifier", prediction = pr, finalModel = model)
-  }, error = function(e){
-    # @TODO also print original message
-    print("Naive Bayes Failed. ")
-  })
+    {
+      Y_train2 <- as.factor(as.character(data.matrix(Y_train)))
+      model = naiveBayes(Y_train2~. , data = X_train)
+      pred <- predict(model, newdata = as.data.frame(X_test))
+      pr <- prediction(as.numeric(as.character(pred)), Y_test)
+      output = new("nb.classifier", prediction = pr, finalModel = model)
+    }, error = function(e){
+      msg <- paste0("Naive Bayes Failed. ", e$message)
+      print(msg)
+    })
   return(output)
 }
 
@@ -293,64 +293,65 @@ logistic.regression <- function(Y_train, X_train, Y_test, X_test, threshold.prob
   # Copy the training set
   output <- NULL
   res <- tryCatch(
-  {
-    X_train2 = data.matrix(X_train)
-    Y_train2 = as.factor(as.character(data.matrix(Y_train)))
-    # Fit initial model
-    glm.fit <- glm(Y_train2 ~. , data=as.data.frame(X_train2), family = binomial)
-    s = summary(glm.fit)
-    # Re-fit until retaining only statistically significant coefficients
-    # @TODO remove this part of the function. As feature selection must now happen outside
-    repeat{
-      p_vals = s$coefficients[-1,4]
-      min_p = max(p_vals)
-      if (min_p < 0.05){
-        break
-      }
-      if (sum(is.na(p_vals))>0){
-        ind = which(is.na(p_vals) == TRUE)[1]
-      } else {
-        ind = which(p_vals == min_p)
-      }
-      X_train2 = X_train2[,-ind]
+    {
+      X_train2 = data.matrix(X_train)
+      Y_train2 = as.factor(as.character(data.matrix(Y_train)))
+      # Fit initial model
       glm.fit <- glm(Y_train2 ~. , data=as.data.frame(X_train2), family = binomial)
       s = summary(glm.fit)
-    }
-    # Now obtain probabilities
-    glm.probs <- predict(glm.fit, type = "response")
-    d1 <- length(glm.probs)
-
-    # Optimize threshold probability to classify 0/1 in the training set
-    if (is.null(threshold.prob)){
-      lr_accuracy = c()
-      cutoff = seq(0, 1, 0.01)
-      for (i in cutoff){
-        glm.pred.train <- rep(0, d1)
-        glm.pred.train[glm.probs > i] = 1
-        accur = mean(glm.pred.train == Y_train)
-        lr_accuracy = c(lr_accuracy, accur)
+      # Re-fit until retaining only statistically significant coefficients
+      # @TODO remove this part of the function. As feature selection must now happen outside
+      repeat{
+        p_vals = s$coefficients[-1,4]
+        min_p = max(p_vals)
+        if (min_p < 0.05){
+          break
+        }
+        if (sum(is.na(p_vals))>0){
+          ind = which(is.na(p_vals) == TRUE)[1]
+        } else {
+          ind = which(p_vals == min_p)
+        }
+        X_train2 = X_train2[,-ind]
+        glm.fit <- glm(Y_train2 ~. , data=as.data.frame(X_train2), family = binomial)
+        s = summary(glm.fit)
       }
-      ind = which(lr_accuracy == max(lr_accuracy))[1]
-      threshold.prob = cutoff[ind]
-    }
-    
-    # Predict in training set using the optimal threshold
-    glm.pred.train <- rep(0, d1)
-    glm.pred.train[glm.probs > threshold.prob] = 1
-    accur = mean(glm.pred.train == Y_train)
-    # Predict in test set
-    X_test2 = X_test[,colnames(X_train2)]
-    glm.probs <- predict(glm.fit, newdata = as.data.frame(X_test2), type = "response")
-    d2 = length(glm.probs)
-    glm.pred.test <- rep(0, d2)
-    glm.pred.test[glm.probs > threshold.prob ] = 1
-    pr <- prediction(as.numeric(as.character(glm.pred.test)), Y_test)
-    # Return model and prediction objects
-    output = new("lr.classifier", prediction = pr, finalModel = s)
-  }, error = function(e){
-    # @TODO also print original message
-    print("Logistic Regression Failed. ")
-  })
+      # Now obtain probabilities
+      glm.probs <- predict(glm.fit, type = "response")
+      d1 <- length(glm.probs)
+      
+      # Optimize threshold probability to classify 0/1 in the training set
+      if (is.null(threshold.prob)){
+        lr_accuracy = c()
+        cutoff = seq(0, 1, 0.01)
+        for (i in cutoff){
+          glm.pred.train <- rep(0, d1)
+          glm.pred.train[glm.probs > i] = 1
+          accur = mean(glm.pred.train == Y_train)
+          lr_accuracy = c(lr_accuracy, accur)
+        }
+        ind = which(lr_accuracy == max(lr_accuracy))[1]
+        threshold.prob = cutoff[ind]
+      }
+      
+      # Predict in training set using the optimal threshold
+      glm.pred.train <- rep(0, d1)
+      glm.pred.train[glm.probs > threshold.prob] = 1
+      accur = mean(glm.pred.train == Y_train)
+      # Predict in test set
+      X_test2 = X_test[,colnames(X_train2)]
+      glm.probs <- predict(glm.fit, newdata = as.data.frame(X_test2), type = "response")
+      d2 = length(glm.probs)
+      glm.pred.test <- rep(0, d2)
+      glm.pred.test[glm.probs > threshold.prob ] = 1
+      pr <- prediction(as.numeric(as.character(glm.pred.test)), Y_test)
+      # Return model and prediction objects
+      output = new("lr.classifier", prediction = pr, finalModel = s)
+    }, error = function(e){
+      # @TODO also print original message
+      msg <- paste0("Logistic Regression Failed.", e$message)
+      print(msg)
+    })
   return(output)
 }
 #' Linear Discriminant Analysis Classifier
@@ -366,16 +367,16 @@ logistic.regression <- function(Y_train, X_train, Y_test, X_test, threshold.prob
 linear.discriminant.analysis <- function(Y_train, X_train, Y_test, X_test){
   output <- NULL
   res <- tryCatch(
-  {
-    Y_train2 <- as.factor(as.character(data.matrix(Y_train)))
-    model = lda(Y_train2 ~ ., data = X_train)
-    pred <- predict(model, newdata = as.data.frame(data.matrix(X_test)))
-    pr <- prediction(as.numeric(as.character(pred$class)), Y_test)
-    output = new("lda.classifier", prediction = pr, finalModel = model)
-  }, error = function(e){
-    # @TODO also print original message
-    print("Linear Discriminant Analysis Failed. ")
-  })
+    {
+      Y_train2 <- as.factor(as.character(data.matrix(Y_train)))
+      model = lda(Y_train2 ~ ., data = X_train)
+      pred <- predict(model, newdata = as.data.frame(data.matrix(X_test)))
+      pr <- prediction(as.numeric(as.character(pred$class)), Y_test)
+      output = new("lda.classifier", prediction = pr, finalModel = model)
+    }, error = function(e){
+      msg <- paste0("Linear Discriminant Analysis Failed. ", e$message)
+      print(msg)
+    })
   return(output)
 }
 
@@ -392,16 +393,16 @@ linear.discriminant.analysis <- function(Y_train, X_train, Y_test, X_test){
 quadratic.discriminant.analysis <- function(Y_train, X_train, Y_test, X_test){
   output <- NULL
   res <- tryCatch(
-  {
-    Y_train2 <- as.factor(as.character(data.matrix(Y_train)))
-    model = qda(Y_train2 ~ ., data = X_train)
-    pred <- predict(model, newdata = as.data.frame(data.matrix(X_test)))
-    pr <- prediction(as.numeric(as.character(pred$class)), Y_test)
-    output <- new("qda.classifier", prediction = pr, finalModel = model)
-  }, error = function(e){
-      # @TODO also print original message
-      print("Quadratic Discriminant Analysis Failed. ")
-  })
+    {
+      Y_train2 <- as.factor(as.character(data.matrix(Y_train)))
+      model = qda(Y_train2 ~ ., data = X_train)
+      pred <- predict(model, newdata = as.data.frame(data.matrix(X_test)))
+      pr <- prediction(as.numeric(as.character(pred$class)), Y_test)
+      output <- new("qda.classifier", prediction = pr, finalModel = model)
+    }, error = function(e){
+      msg <- paste0("Quadratic Discriminant Analysis Failed. ", e$message)
+      print(msg)
+    })
   return(output)
 }
 
@@ -419,23 +420,23 @@ quadratic.discriminant.analysis <- function(Y_train, X_train, Y_test, X_test){
 decision.tree <- function(Y_train, X_train, Y_test, X_test, max.level = 5, nfolds = 4){
   output <- NULL
   res <- tryCatch(
-  {
-    # Perform cross validation
-    ctrl <- trainControl(method = "cv", number = nfolds, savePredictions = TRUE)
-    Y_train2  = as.factor(as.character(data.matrix(Y_train)))
-    # Fit with max level specified
-    cv.fit <- train(Y_train2 ~ ., data = data.matrix(X_train), method="ctree",
+    {
+      # Perform cross validation
+      ctrl <- trainControl(method = "cv", number = nfolds, savePredictions = TRUE)
+      Y_train2  = as.factor(as.character(data.matrix(Y_train)))
+      # Fit with max level specified
+      cv.fit <- train(Y_train2 ~ ., data = data.matrix(X_train), method="ctree",
                       trControl = ctrl, tuneLength = 10, controls = ctree_control(maxdepth = max.level))
-    # Predict with new data
-    tree.pred = predict(cv.fit, newdata = as.data.frame(data.matrix(X_test)), type = 'raw')
-    pr <- prediction(as.numeric(as.character(tree.pred)), Y_test)
-    # Return model and prediction objects
-    output = new("dt.classifier", prediction = pr, finalModel = cv.fit$finalModel)
-  }, error = function(e){
-    # @TODO also print original message
-    print("Decision Tree Failed. ")
-  })
-
+      # Predict with new data
+      tree.pred = predict(cv.fit, newdata = as.data.frame(data.matrix(X_test)), type = 'raw')
+      pr <- prediction(as.numeric(as.character(tree.pred)), Y_test)
+      # Return model and prediction objects
+      output = new("dt.classifier", prediction = pr, finalModel = cv.fit$finalModel)
+    }, error = function(e){
+      msg <- paste0("Decision Tree Failed.", e$message)
+      print(msg)
+    })
+  
   return(output)
 }
 #' Random Forest Classifier
@@ -455,24 +456,24 @@ random.forest <- function(Y_train, X_train, Y_test, X_test, B, max.pred = 4,max.
   # Perform cross validation
   output <- NULL
   res <- tryCatch(
-  {
-    ctrl <- trainControl(method = "cv", number = nfolds, savePredictions = TRUE)
-    Y_train2  = as.factor(as.character(data.matrix(Y_train)))
-    # Fit with max
-    # @TODO mtry doesn't seem to work. Also we may want to set default mtry to sqrt(predictors)
-    cv.fit <- train(Y_train2 ~ ., data = data.matrix(X_train), method="rf",
-                    trControl = ctrl, tuneLength = 2, controls = ctree_control(mtry = max.pred,
-                  maxdepth = max.level))
-    rf.pred = predict(cv.fit, newdata = as.data.frame(data.matrix(X_test)), type = 'raw')
-    pr <- prediction(as.numeric(as.character(rf.pred)), Y_test)
-    # Return model and prediction objects
-    output = new("rf.classifier", prediction = pr, finalModel = cv.fit$finalModel)
-  }, error = function(e){
-    # @TODO also print original message
-    print("Random Forest Failed. ")
-  })
+    {
+      ctrl <- trainControl(method = "cv", number = nfolds, savePredictions = TRUE)
+      Y_train2  = as.factor(as.character(data.matrix(Y_train)))
+      # Fit with max
+      # @TODO mtry doesn't seem to work. Also we may want to set default mtry to sqrt(predictors)
+      cv.fit <- train(Y_train2 ~ ., data = data.matrix(X_train), method="rf",
+                      trControl = ctrl, tuneLength = 2, controls = ctree_control(mtry = max.pred,
+                                                                                 maxdepth = max.level))
+      rf.pred = predict(cv.fit, newdata = as.data.frame(data.matrix(X_test)), type = 'raw')
+      pr <- prediction(as.numeric(as.character(rf.pred)), Y_test)
+      # Return model and prediction objects
+      output = new("rf.classifier", prediction = pr, finalModel = cv.fit$finalModel)
+    }, error = function(e){
+      msg <- paste0("Random Forest Failed. ", e$message)
+      print(msg)
+    })
   return(output)
-
+  
 }
 
 
@@ -491,7 +492,7 @@ classifier.metrics <- function(pred.obj, print.flag = FALSE){
   sensitivity = slot(performance(pred.obj, "sens"), "y.values")[[1]][2]
   specificity = slot(performance(pred.obj, "spec"), "y.values")[[1]][2]
   precision = slot(performance(pred.obj, "prec"), "y.values")[[1]][2]
-
+  
   if (print.flag){
     cat('\n- Classifier metrics:\n   MSPE: ', mspe, '\n   Accuracy: ',
         accuracy, '\n   Sensitivity: ', sensitivity, '\n   Specificity: ',
@@ -520,7 +521,7 @@ barplot.classifier.metric <- function(df_col, name, labels){
 aggregate.results <- function(output){
   "Stores results in a dataframe
   Input: Prediction objects (ROCR)"
-
+  
   # Aggregate results in a dataframe
   df_res = data.frame('Classifier' = character(7),
                       'MSPE_test' = double(7),
@@ -529,7 +530,7 @@ aggregate.results <- function(output){
                       'Specificity' = double(7),
                       'Precision' = double(7),
                       'Ranking' = character(7), stringsAsFactors=FALSE )
-
+  
   name.list = list(knn.classifier = 'KNN',
                    nb.classifier  = 'NB',
                    lr.classifier  = 'LR',
@@ -537,7 +538,7 @@ aggregate.results <- function(output){
                    qda.classifier = 'QDA',
                    dt.classifier  = 'DT',
                    rf.classifier  = 'RF')
-
+  
   # Choose those classifiers which have non null outputs
   j = 1
   for(name in slotNames(output)){
@@ -548,8 +549,8 @@ aggregate.results <- function(output){
     }
   }
   df_res = df_res[-j,]
-
-
+  
+  
   ranking = as.data.frame(sapply(df_res[,3:6], function(x) rank(x)))
   ranking$avg = 0
   for (i in nrow(df_res)){
@@ -561,7 +562,7 @@ aggregate.results <- function(output){
   cat('\n')
   print.data.frame(df_res, digits = 3, right = FALSE)
   cat('\n')
-
+  
   # Plot
   par(mfrow = c(2,2))
   barplot.classifier.metric(df_res[,3], 'Accuracy', df_res[,1])
@@ -578,7 +579,7 @@ aggregate.results <- function(output){
 #'
 plot_roc_curves <- function(output){
   # Obtain true and false positives
-
+  
   name.list = list(knn.classifier = 'KNN',
                    nb.classifier  = 'NB',
                    lr.classifier  = 'LR',
@@ -596,19 +597,19 @@ plot_roc_curves <- function(output){
       roc = performance(slot(output, name)@prediction, measure = 'tpr', x.measure = 'fpr')
       if(i == 1){
         plot(roc, col = colors[i], lwd = 3, main = 'ROC curve per classifier',
-           xlim = c(0,1), ylim = c(0,1))
+             xlim = c(0,1), ylim = c(0,1))
       }else {
         plot(roc, col = colors[i], lwd = 2, add=TRUE)
       }
-        labels[i] <- name.list[[name]]
+      labels[i] <- name.list[[name]]
       i = i+1
     }
   }
   par(xpd=FALSE)
   abline(a=0, b=1, lwd=2)
-
+  
   legend(0.52, 0.45, labels, lty=c(1,1), lwd=c(2.5, 2.5, 2.5, 2.5), col=
-            colors[1:i])
+           colors[1:i])
 }
 
 
