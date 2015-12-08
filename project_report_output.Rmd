@@ -9,16 +9,16 @@ This is an R Markdown document. Markdown is a simple formatting syntax for autho
 
 When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
 
+Let's start by importing all our functionality. 
+
 ```{r}
 rm(list=ls())
-
 source("Classification.R")
 ```
 
-The data set from 
+Let's import the Skin dataset from the UCI website. 
 
 ```{r, echo=FALSE}
-setwd("/MSAN_USF/courses_fall/621-MachineLearning/project/MLProject/USF-ML-Project/")
 data <- read.table('skin_nonskin.txt', header = FALSE)
 colnames(data) <- c('B','G', 'R', 'Skin')
 data <- reposition.Y(data, 'Skin')
@@ -28,6 +28,7 @@ str(data)
 
 
 The function classification.predictor.evaluation does the parameter evaluation from the data set. It returns number of Principal components required to explain 90% of the variance.  This method also gives the summary statistics of the dataset.
+
 ```{r, echo=FALSE}
 classification.predictor.evaluation(data)
 
@@ -52,6 +53,7 @@ res.all <- classification(data, outcome.col = "Skin", classifier = "all")
 ```
 
 Here we test the KNN classfier alone with the classifier type we passed in as classifier = "knn" and the specify the response column as "Skin". The output is ROC curve for the classifier. 
+
 ```{r, echo=FALSE}
 res.knn <- classification(data, outcome.col = "Skin", classifier = "knn")
 summarize(res.knn)
