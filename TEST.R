@@ -16,9 +16,13 @@ str(data)
 ########## PREDICTOR EVALUATION ##########
 classification.predictor.evaluation(data)
 
-# Subset to speed up test
-index <- sample(nrow(data), 6000)
-data <- data[index, ]
+
+############### SUBSETTING AND TRAIN/TEST SPLIT ##########
+index <- sample(nrow(data), 7000)
+test.index <- index[1:1000]
+train.index <- index[1001:length(index)]
+test.data <- data[test.index, ]
+data <- data[train.index, ]
 
 
 ########## MODEL SELECTION ##############
@@ -60,3 +64,6 @@ plot.summary(res.lr)
 ############# PREDICTIONS ###################
 
 
+results <- predict(res.knn@finalModel, test.data[-1], type = "class")
+pred <- prediction(as.numeric(as.character(results)), test.data[1])
+classifier.metrics(pred, print.flag = TRUE)

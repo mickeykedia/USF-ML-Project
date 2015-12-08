@@ -493,7 +493,7 @@ classifier.metrics <- function(pred.obj, print.flag = FALSE){
   if (print.flag){
     cat('\n- Classifier metrics:\n   MSPE: ', mspe, '\n   Accuracy: ',
         accuracy, '\n   Sensitivity: ', sensitivity, '\n   Specificity: ',
-        specificity, '\n   Precision: ', precision)
+        specificity, '\n   Precision: ', precision, '\n')
   }
   return(c(mspe, accuracy, sensitivity, specificity, precision))
 }
