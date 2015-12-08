@@ -290,17 +290,17 @@ naive.bayes <- function(Y_train, X_train, Y_test, X_test){
 #' @param nfolds Number of folds in the cross validation
 #' @return fitted model and prediction object
 logistic.regression <- function(Y_train, X_train, Y_test, X_test, threshold.prob = NULL){
-  # Copy the training set
+  
   output <- NULL
   res <- tryCatch(
     {
+      # Copy the training set
       X_train2 = data.matrix(X_train)
       Y_train2 = as.factor(as.character(data.matrix(Y_train)))
       # Fit initial model
       glm.fit <- glm(Y_train2 ~. , data=as.data.frame(X_train2), family = binomial)
       s = summary(glm.fit)
       # Re-fit until retaining only statistically significant coefficients
-      # @TODO remove this part of the function. As feature selection must now happen outside
       repeat{
         p_vals = s$coefficients[-1,4]
         min_p = max(p_vals)
@@ -348,7 +348,6 @@ logistic.regression <- function(Y_train, X_train, Y_test, X_test, threshold.prob
       # Return model and prediction objects
       output = new("lr.classifier", prediction = pr, finalModel = s)
     }, error = function(e){
-      # @TODO also print original message
       msg <- paste0("Logistic Regression Failed.", e$message)
       print(msg)
     })
@@ -459,8 +458,6 @@ random.forest <- function(Y_train, X_train, Y_test, X_test, B, max.pred = 4,max.
     {
       ctrl <- trainControl(method = "cv", number = nfolds, savePredictions = TRUE)
       Y_train2  = as.factor(as.character(data.matrix(Y_train)))
-      # Fit with max
-      # @TODO mtry doesn't seem to work. Also we may want to set default mtry to sqrt(predictors)
       cv.fit <- train(Y_train2 ~ ., data = data.matrix(X_train), method="rf",
                       trControl = ctrl, tuneLength = 2, controls = ctree_control(mtry = max.pred,
                                                                                  maxdepth = max.level))
@@ -612,5 +609,3 @@ plot_roc_curves <- function(output){
            colors[1:i])
 }
 
-
-################## GENERAL HELPER ###############
