@@ -102,7 +102,7 @@ predictorMeans <- function(X){
   X_numeric = X[,numeric_cols]
   var_mean = lapply(X_numeric, mean, na.rm = TRUE)
   return(unlist(var_mean))
-  
+
 }
 
 
@@ -117,7 +117,7 @@ predictorStandardDeviations <- function(X){
   X_numeric = X[,numeric_cols]
   var_sd = lapply(X_numeric, sd, na.rm = TRUE)
   return(unlist(var_sd))
-  
+
 }
 
 #' Variance Explained by component
@@ -152,7 +152,7 @@ predictorCollinearity <- function(X, threshold = 0.9){
   # Subset those higher than threshold
   df_cor = subset(df_cor, abs(df_cor$Freq) > threshold)
   colnames(df_cor)[3] = 'Correlation'
-  
+
   if (nrow(df_cor) == 0){
     cat('There are no collinear variables in the dataset')
   }else{
@@ -196,7 +196,7 @@ convertCategoricalToDummy <- function(X){
   }
   X = X[,-to_del]
   return(X)
-  
+
 }
 
 
@@ -240,14 +240,14 @@ k.nearest.neighbour <- function(Y_train, X_train, Y_test, X_test, k, nfolds = 4)
       }
       knn.pred = predict(cv.fit$finalModel, newdata = as.data.frame(X_test), type = "class")
       pr <- prediction(as.numeric(as.character(knn.pred)), Y_test)
-      
+
       # Return model and prediction objects
       output = new("knn.classifier", prediction = pr, finalModel = cv.fit$finalModel)
     }, error = function(e){
       msg <- paste0("K Nearest Neighbours Failed. ", e$message)
       print(msg)
     })
-  
+
   return(output)
 }
 
@@ -263,7 +263,7 @@ k.nearest.neighbour <- function(Y_train, X_train, Y_test, X_test, k, nfolds = 4)
 #' @param Y_test
 #' @return fitted model and prediction object
 naive.bayes <- function(Y_train, X_train, Y_test, X_test){
-  
+
   output <- NULL
   res <- tryCatch(
     {
@@ -290,7 +290,7 @@ naive.bayes <- function(Y_train, X_train, Y_test, X_test){
 #' @param nfolds Number of folds in the cross validation
 #' @return fitted model and prediction object
 logistic.regression <- function(Y_train, X_train, Y_test, X_test, threshold.prob = NULL){
-  
+
   output <- NULL
   res <- tryCatch(
     {
@@ -319,7 +319,7 @@ logistic.regression <- function(Y_train, X_train, Y_test, X_test, threshold.prob
       # Now obtain probabilities
       glm.probs <- predict(glm.fit, type = "response")
       d1 <- length(glm.probs)
-      
+
       # Optimize threshold probability to classify 0/1 in the training set
       if (is.null(threshold.prob)){
         lr_accuracy = c()
@@ -333,7 +333,7 @@ logistic.regression <- function(Y_train, X_train, Y_test, X_test, threshold.prob
         ind = which(lr_accuracy == max(lr_accuracy))[1]
         threshold.prob = cutoff[ind]
       }
-      
+
       # Predict in training set using the optimal threshold
       glm.pred.train <- rep(0, d1)
       glm.pred.train[glm.probs > threshold.prob] = 1
@@ -435,7 +435,7 @@ decision.tree <- function(Y_train, X_train, Y_test, X_test, max.level = 5, nfold
       msg <- paste0("Decision Tree Failed.", e$message)
       print(msg)
     })
-  
+
   return(output)
 }
 #' Random Forest Classifier
@@ -470,7 +470,7 @@ random.forest <- function(Y_train, X_train, Y_test, X_test, B, max.pred = 4,max.
       print(msg)
     })
   return(output)
-  
+
 }
 
 
@@ -489,7 +489,7 @@ classifier.metrics <- function(pred.obj, print.flag = FALSE){
   sensitivity = slot(performance(pred.obj, "sens"), "y.values")[[1]][2]
   specificity = slot(performance(pred.obj, "spec"), "y.values")[[1]][2]
   precision = slot(performance(pred.obj, "prec"), "y.values")[[1]][2]
-  
+
   if (print.flag){
     cat('\n- Classifier metrics:\n   MSPE: ', mspe, '\n   Accuracy: ',
         accuracy, '\n   Sensitivity: ', sensitivity, '\n   Specificity: ',
@@ -518,7 +518,7 @@ barplot.classifier.metric <- function(df_col, name, labels){
 aggregate.results <- function(output){
   "Stores results in a dataframe
   Input: Prediction objects (ROCR)"
-  
+
   # Aggregate results in a dataframe
   df_res = data.frame('Classifier' = character(7),
                       'MSPE_test' = double(7),
@@ -527,7 +527,7 @@ aggregate.results <- function(output){
                       'Specificity' = double(7),
                       'Precision' = double(7),
                       'Ranking' = character(7), stringsAsFactors=FALSE )
-  
+
   name.list = list(knn.classifier = 'KNN',
                    nb.classifier  = 'NB',
                    lr.classifier  = 'LR',
@@ -535,7 +535,7 @@ aggregate.results <- function(output){
                    qda.classifier = 'QDA',
                    dt.classifier  = 'DT',
                    rf.classifier  = 'RF')
-  
+
   # Choose those classifiers which have non null outputs
   j = 1
   for(name in slotNames(output)){
@@ -546,8 +546,8 @@ aggregate.results <- function(output){
     }
   }
   df_res = df_res[-j,]
-  
-  
+
+
   ranking = as.data.frame(sapply(df_res[,3:6], function(x) rank(x)))
   ranking$avg = 0
   for (i in nrow(df_res)){
@@ -559,7 +559,7 @@ aggregate.results <- function(output){
   cat('\n')
   print.data.frame(df_res, digits = 3, right = FALSE)
   cat('\n')
-  
+
   # Plot
   par(mfrow = c(2,2))
   barplot.classifier.metric(df_res[,3], 'Accuracy', df_res[,1])
@@ -576,7 +576,7 @@ aggregate.results <- function(output){
 #'
 plot_roc_curves <- function(output){
   # Obtain true and false positives
-  
+
   name.list = list(knn.classifier = 'KNN',
                    nb.classifier  = 'NB',
                    lr.classifier  = 'LR',
@@ -604,7 +604,7 @@ plot_roc_curves <- function(output){
   }
   par(xpd=FALSE)
   abline(a=0, b=1, lwd=2)
-  
+
   legend(0.52, 0.45, labels, lty=c(1,1), lwd=c(2.5, 2.5, 2.5, 2.5), col=
            colors[1:i])
 }
