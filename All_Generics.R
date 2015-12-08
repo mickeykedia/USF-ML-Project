@@ -38,7 +38,7 @@ setMethod("plot.summary", c(o = 'nb.classifier'), function(o){
            c('blue', 'black'))
   par(xpd=FALSE)
   abline(a=0, b=1, lwd=2)
-  
+
 })
 setMethod("plot.summary", c(o = 'lda.classifier'), function(o){
   roc.1 = performance(o@prediction, measure = 'tpr', x.measure = 'fpr')
@@ -136,7 +136,7 @@ setMethod("summarize",c(o = 'lda.classifier'), function(o){
       '\n\n', sep = "")
   cat(' - All predictors are continuous', '\n',
     ' - All predictors have Normally distributed and independent conditional probabilities', '\n',
-    ' - Same covariance matrix for ##########', sep="")
+    ' - Same covariance matrix for both sets of conditional probabilities', sep="")
 
 })
 setMethod("summarize", c(o = 'qda.classifier'), function(o){
